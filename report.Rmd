@@ -1,0 +1,40 @@
+---
+title: "The MTA Versus Citi Bike and Uber"
+author: "Jessica Padilla"
+date: "September 27, 2019"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+## Introduction
+
+The Metropolitan Transportation Authority (MTA) is responsible for overseeing the transportation network throughout New York and its surrounding regions.  The MTA consists of New York City Transit, Long Island Railroad, Metro-North Railroad, Staten Island Railway, Regional Bus Operations, and B&T (Bridges and Tunnels).  For this project, we focus on the the subways provided by the MTA.
+
+In 1979, the subway system was completely deteoriated.  In order to revive the system, the MTA needed more funds than the State of New York could provide annually.  As a result, the MTA continuously sold bonds and took on several loans to rebuild infrastructure, in hopes that the debt would eventually be paid off by fare revenue.  However, many decades later, there is a decrease in subway ridership, and the MTA debt is approaching 42 billion dollars.  But why is subway ridership declining?  Is the MTA to blame, or are people looking to other forms of transportation?
+
+In 2011, Uber was launched in New York City.  Uber is a ride service company, where people can request trips through the ease of a phone app.
+
+Furthermore, in 2013, a bike share program called Citi Bike was launched throughout NYC.  Citi Bike allows people to pay either on an hourly basis, daily basis, or through an annual membership.  
+
+Here we discuss how the decrease in subway ridership is correlated to the increase in Citi Bike and Uber services.  We also provide suggestions on how MTA finances can be re-allocated to help subways remain competitive in the transporation industry.
+
+
+
+## Methods
+
+Information in regards to MTA subway services was obtained through the "Performance Dashboard" of the official MTA web site (http://dashboard.mta.info).  Data was exported from the site in the form of .csv files.
+
+Subway ridership information was also retrieved from the MTA web site (http://web.mta.info/nyct/facts/ridership/).  However, since no export option was available, data was extracted using web scraping.  This method involves extracting text and tables from the html code that generates the web page.  This was done by using the rvest package within R.
+
+MTA budget and revenue data were found on the "MTA Fiscal Dashboard" of the Citizens Budget Commission web site (https://cbcny.org/research/mta-fiscal-dashboard).  Since no export option was available, this data was also extracted using web scraping.  
+
+Citi Bike data was retrieved from the official Citi Bike web site (https://www.citibikenyc.com/system-data).  All data was exported in the form of .csv files.
+
+Uber ridership data was obtained from the NYC OpenData site (https://data.cityofnewyork.us/Transportation/FHV-Base-Aggregate-Report/2v9c-2k7f/data).  Information pertaining to Uber was specifically found in the FHV Base Aggregate Report found on the site.
+
+All of the data was, then, imported into R.
+
+Data was filtered to only include information pertaining to the subway system, Citi Bike, and Uber.  Wrangling was performed to clean any relevant data and format it for further analysis.
+
+The ggplot2 package was used within R as the primary tool for data visualization techniques.  Graphs generated with this package were used to clarify trends and demonstrate new findings.
