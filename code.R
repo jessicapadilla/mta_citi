@@ -2,7 +2,7 @@
 library(tidyverse)
 library(rvest)
 library(lubridate)
-library(RColorBrewer)
+library(gridExtra)
 
 ## retrieve the mta revenue data
 mta_revenue <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/mta_revenue.csv")
@@ -74,54 +74,59 @@ subway_riders <- subway_riders %>% as_tibble()
 
 ## rename the columns
 subway_riders <- subway_riders %>% 
-  rename(Weekdays = `Average Weekday`,
-         Saturdays = `Average Saturday`,
-         Sundays = `Average Sunday`,
-         Weekends = `Average Weekend`)
-
-## spread the subway riders table by creating a ridership category
-subway_riders <- subway_riders %>% 
-  gather(Ridership_Category, Average_Riders, 'Weekdays':'Annual Total')
-
-## arrange the ridership category in descending order
-subway_riders <- subway_riders %>% 
-  mutate(Ridership_Category = reorder(Ridership_Category, -Average_Riders))
+  rename(Average_Weekdays = `Average Weekday`,
+         Average_Saturdays = `Average Saturday`,
+         Average_Sundays = `Average Sunday`,
+         Average_Weekends = `Average Weekend`,
+         Annual_Total = `Annual Total`)
 
 ## check the table
 head(subway_riders)
 
-## create a graph for subway ridership
-subway_riders %>% 
-  filter(Ridership_Category == "Weekdays" | 
-           Ridership_Category == "Weekends") %>%
-  ggplot(aes(Year, Average_Riders)) + 
+## create a graph for subway ridership during weekdays
+weekdays <- subway_riders %>% 
+  ggplot(aes(Year, Average_Weekdays)) + 
   geom_bar(stat = "identity", fill = "black") + 
   scale_x_continuous(breaks = seq(2013, 2018, 1)) + 
-  coord_cartesian(ylim = c(3500000, 6000000)) +
+  coord_cartesian(ylim = c(4000000, 6000000)) +
   xlab("Year") + ylab("Average Number of Riders") +
-  ggtitle("Subway Ridership") +
-  facet_wrap(~Ridership_Category) + theme_bw()
+  ggtitle("Weekdays") +
+  theme_bw()
+
+## create a graph for subway ridership during weekends
+weekends <- subway_riders %>% 
+  ggplot(aes(Year, Average_Weekends)) + 
+  geom_bar(stat = "identity", fill = "black") + 
+  scale_x_continuous(breaks = seq(2013, 2018, 1)) + 
+  coord_cartesian(ylim = c(4000000, 6000000)) +
+  xlab("Year") + ylab("Average Number of Riders") +
+  ggtitle("Weekends") +
+  theme_bw()
+
+## put the graphs side by side
+grid.arrange(weekdays, weekends, ncol = 2)
 
 ## set up a link to the uber data
 uber_url <- "https://github.com/jessicapadilla/mta_citi_uber/blob/master/all_uber_data.csv?raw=true"
 
 ## read the csv from the link
-uber_ridership <- read_csv(uber_url)
+uber_riders <- read_csv(uber_url)
 
 ## check the structure of the data
-str(uber_ridership)
+str(uber_riders)
 
 ## filter the data to just uber data
-uber <- uber_ridership %>% filter(`Base Name` == "UBER")
+uber_riders <- uber_riders %>% filter(`Base Name` == "UBER")
 
 ## remove unwanted columns and rename some columns
-uber <- uber %>% select(c("Base Name", "Year", "Month", "Month Name", "Total Dispatched Trips")) %>%
+uber_riders <- uber_riders %>% 
+  select(c("Base Name", "Year", "Month", "Month Name", "Total Dispatched Trips")) %>%
   rename(Company = "Base Name",
          Month_Name = "Month Name",
-         Total_Trips_or_Total_Passengers = "Total Dispatched Trips")
+         Total_Trips_or_Passengers = "Total Dispatched Trips")
 
 ## check the table
-head(uber)
+head(uber_riders)
 
 ## get the Citi Bikes Q3 2013 data
 citi_q32013 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_launch_to_sep2013.csv")
@@ -256,7 +261,7 @@ citi_q42018 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/mas
 citi_q42018 <- citi_q42018 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
 
 ## combine all the citi data
-citi <- rbind(citi_q32013, citi_q42013, 
+citi_riders <- rbind(citi_q32013, citi_q42013, 
               citi_q12014, citi_q22014, citi_q32014, citi_q42014,
               citi_q12015, citi_q22015, citi_q32015, citi_q42015,
               citi_q12016, citi_q22016, citi_q32016, citi_q42016,
@@ -264,23 +269,23 @@ citi <- rbind(citi_q32013, citi_q42013,
               citi_q12018, citi_q22018, citi_q32018, citi_q42018)
 
 ## check the citi data
-head(citi)
+head(citi_riders)
 
 ## change the date column to a date format
-citi$Date <- mdy(citi$Date)
+citi_riders$Date <- mdy(citi_riders$Date)
 
 ## rename the trips column and add a Month column
-citi <- citi %>% rename(Total_Trips_or_Total_Passengers = `Trips over the past 24-hours (midnight to 11:59pm)`) %>%
+citi_riders <- citi_riders %>% rename(Total_Trips_or_Passengers = `Trips over the past 24-hours (midnight to 11:59pm)`) %>%
   mutate(Month = Date) 
 
 ## edit the Month column to include the Month number only
-citi$Month <- citi$Month %>% str_replace("^(\\d{4})-(\\d{2})-(\\d{2})$", "\\2") %>% as.numeric()
+citi_riders$Month <- citi_riders$Month %>% str_replace("^(\\d{4})-(\\d{2})-(\\d{2})$", "\\2") %>% as.numeric()
 
 ## add a Month name column
-citi <- citi %>% mutate(Month_Name = Month)
+citi_riders <- citi_riders %>% mutate(Month_Name = Month)
 
 ## edit the Month name column to include the Month name only
-citi <- citi %>% mutate(Month_Name = case_when(
+citi_riders <- citi_riders %>% mutate(Month_Name = case_when(
   Month_Name == 1 ~ "January",
   Month_Name == 2 ~ "February",
   Month_Name == 3 ~ "March",
@@ -295,34 +300,21 @@ citi <- citi %>% mutate(Month_Name = case_when(
   Month_Name == 12 ~ "December"
 ))
 
-## check the citi data
-head(citi)
-
 ## add a Year column
-citi <- citi %>% mutate(Year = Date)
+citi_riders <- citi_riders %>% mutate(Year = Date)
 
 ## edit the Year column to include the Year only
-citi$Year <- citi$Year %>% str_replace("^(\\d{4})-(\\d{2})-(\\d{2})$", "\\1") %>% as.numeric()
-
-## remove the Date column
-citi <- citi %>% select(-Date)
+citi_riders$Year <- citi_riders$Year %>% 
+  str_replace("^(\\d{4})-(\\d{2})-(\\d{2})$", "\\1") %>% as.numeric()
 
 ## add a Company column
-citi$Company <- "CITI"
+citi_riders$Company <- "Citi Bike"
 
-## create a table for uber and citi riders
-citi_uber <- rbind(citi, uber)
+## check the citi bike table
+head(citi_riders)
 
-## check the table
-head(citi_uber)
-
-## reorder the columns
-citi_uber <- citi_uber[c("Company", "Year", "Month", "Month_Name", "Total_Trips_or_Total_Passengers")]
-
-## check the table again
-head(citi_uber)
-
-## create a facet wrap for citi and uber drivers
-citi_uber %>%
-  ggplot(aes(Year, Total_Trips_or_Total_Passengers, col = Company)) + 
-  geom_jitter()
+## create a graph for citi riders
+citi_riders %>% group_by(Company, Year, Month) %>%
+  summarize(Total_Trips = sum(Total_Trips_or_Passengers)) %>%
+  ggplot(aes(Year, Total_Trips)) +
+  geom_area()

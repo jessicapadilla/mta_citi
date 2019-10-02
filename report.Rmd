@@ -45,9 +45,12 @@ The debt of the MTA has grown significantly over the years and is project to rea
 
 
 ```{r, subway fare revenue, echo = FALSE, message = FALSE, results = 'hide', fig.height = 3.65}
+
 ## load libraries
 library(tidyverse)
 library(rvest)
+library(lubridate)
+library(gridExtra)
 
 ## retrieve the mta revenue data
 mta_revenue <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/mta_revenue.csv")
@@ -83,6 +86,7 @@ mta_revenue %>% filter(Year <= 2018 & Revenue_Description == "Subway") %>%
   ggtitle("MTA Subway Fare Revenue") + 
   theme_bw()
 ```
+
 If we focus between the years 2013 and 2018, we see that this is due to the decrease in subway ridership throughout the entire week.  Both weekend and weekday ridership numbers are at their lowest in 2018.
 
 ```{r, subway ridership,  echo = FALSE, message = FALSE, results = 'hide', fig.height = 3.65}
@@ -122,32 +126,36 @@ subway_riders <- subway_riders %>% as_tibble()
 
 ## rename the columns
 subway_riders <- subway_riders %>% 
-  rename(Weekdays = `Average Weekday`,
-         Saturdays = `Average Saturday`,
-         Sundays = `Average Sunday`,
-         Weekends = `Average Weekend`)
-
-## spread the subway riders table by creating a ridership category
-subway_riders <- subway_riders %>% 
-  gather(Ridership_Category, Average_Riders, 'Weekdays':'Annual Total')
-
-## arrange the ridership category in descending order
-subway_riders <- subway_riders %>% 
-  mutate(Ridership_Category = reorder(Ridership_Category, -Average_Riders))
+  rename(Average_Weekdays = `Average Weekday`,
+         Average_Saturdays = `Average Saturday`,
+         Average_Sundays = `Average Sunday`,
+         Average_Weekends = `Average Weekend`,
+         Annual_Total = `Annual Total`)
 
 ## check the table
 head(subway_riders)
 
-## create a graph for subway ridership
-subway_riders %>% 
-  filter(Ridership_Category == "Weekdays" | 
-           Ridership_Category == "Weekends") %>%
-  ggplot(aes(Year, Average_Riders)) + 
+## create a graph for subway ridership during weekdays
+weekdays <- subway_riders %>% 
+  ggplot(aes(Year, Average_Weekdays)) + 
   geom_bar(stat = "identity", fill = "black") + 
   scale_x_continuous(breaks = seq(2013, 2018, 1)) + 
-  coord_cartesian(ylim = c(3500000, 6000000)) +
+  coord_cartesian(ylim = c(4000000, 6000000)) +
   xlab("Year") + ylab("Average Number of Riders") +
-  ggtitle("Subway Ridership") +
-  facet_wrap(~Ridership_Category) + theme_bw()
+  ggtitle("Weekdays") +
+  theme_bw()
+
+## create a graph for subway ridership during weekends
+weekends <- subway_riders %>% 
+  ggplot(aes(Year, Average_Weekends)) + 
+  geom_bar(stat = "identity", fill = "black") + 
+  scale_x_continuous(breaks = seq(2013, 2018, 1)) + 
+  coord_cartesian(ylim = c(4000000, 6000000)) +
+  xlab("Year") + ylab("Average Number of Riders") +
+  ggtitle("Weekends") +
+  theme_bw()
+
+## put the graphs side by side
+grid.arrange(weekdays, weekends, ncol = 2)
 ```
 
