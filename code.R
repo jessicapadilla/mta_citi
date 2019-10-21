@@ -83,28 +83,40 @@ subway_riders <- subway_riders %>%
 ## check the table
 head(subway_riders)
 
-## create a graph for subway ridership during weekdays
-weekdays <- subway_riders %>% 
-  ggplot(aes(Year, Average_Weekdays)) + 
-  geom_bar(stat = "identity", fill = "black") + 
-  scale_x_continuous(breaks = seq(2013, 2018, 1)) + 
-  coord_cartesian(ylim = c(4000000, 6000000)) +
-  xlab("Year") + ylab("Average Number of Riders") +
-  ggtitle("Weekdays") +
+## gather the subway riders data
+subway_riders <- subway_riders %>% 
+  gather(Category, Riders, Average_Weekdays:Annual_Total)
+
+## create a graph showing the average number of riders on weekdays
+weekdays <- subway_riders %>% filter(Category == "Average_Weekdays") %>%
+  ggplot(aes(Year, Riders)) + 
+  geom_point(color = "red", show.legend = FALSE) + 
+  geom_line(color = "red", show.legend = FALSE) + 
+  coord_cartesian(ylim = c(5400000, 5700000)) +
+  xlab("Year") + ylab("Average Number of Riders") + ggtitle("Weekdays") +
   theme_bw()
 
-## create a graph for subway ridership during weekends
-weekends <- subway_riders %>% 
-  ggplot(aes(Year, Average_Weekends)) + 
-  geom_bar(stat = "identity", fill = "black") + 
-  scale_x_continuous(breaks = seq(2013, 2018, 1)) + 
-  coord_cartesian(ylim = c(4000000, 6000000)) +
-  xlab("Year") + ylab("Average Number of Riders") +
-  ggtitle("Weekends") +
+## create a graph showing the average number of riders on weekends
+weekends <- subway_riders %>% filter(Category == "Average_Weekends") %>%
+  ggplot(aes(Year, Riders, col = )) + 
+  geom_point(color = "purple", show.legend = FALSE) + 
+  geom_line(color = "purple", show.legend = FALSE) + 
+  coord_cartesian(ylim = c(5400000, 6000000)) +
+  xlab("Year") + ylab("Average Number of Riders") + ggtitle("Weekends") +
   theme_bw()
-
+                         
 ## put the graphs side by side
 grid.arrange(weekdays, weekends, ncol = 2)
+
+## create a table for annual subway totals
+annual_subway <- subway_riders %>% filter(Category == "Annual_Total") %>%
+  spread(Category, Riders)
+
+## add a company column to the table
+annual_subway$Company <- "MTA"
+
+## check the table
+head(annual_subway)
 
 ## set up a link to the uber data
 uber_url <- "https://github.com/jessicapadilla/mta_citi_uber/blob/master/all_uber_data.csv?raw=true"
@@ -127,6 +139,16 @@ uber_riders <- uber_riders %>%
 
 ## check the table
 head(uber_riders)
+
+## create a table for annual uber totals
+annual_uber <- uber_riders %>% group_by(Year) %>%
+  summarize(Annual_Total = sum(Total_Trips_or_Passengers))
+
+## add a company column to the table
+annual_uber$Company <- "Uber"
+
+## check the table
+head(annual_uber)
 
 ## get the Citi Bikes Q3 2013 data
 citi_q32013 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_launch_to_sep2013.csv")
@@ -318,3 +340,39 @@ citi_riders %>% group_by(Company, Year, Month) %>%
   summarize(Total_Trips = sum(Total_Trips_or_Passengers)) %>%
   ggplot(aes(Year, Total_Trips)) +
   geom_area()
+
+## create a table for annual citi totals
+annual_citi <- citi_riders %>% group_by(Year) %>%
+  summarize(Annual_Total = sum(Total_Trips_or_Passengers))
+
+## add a company column to the table
+annual_citi$Company <- "Citi Bike"
+
+## check the table
+head(annual_citi)
+
+## merge all the annual total tables
+annual_ridership <- rbind(annual_subway, annual_uber, annual_citi)
+
+## create a graph showing annual ridership between companies
+annual_ridership %>% filter(Company == "Citi Bike") %>%
+  ggplot(aes(Year, Annual_Total, col = Company)) +
+  geom_point() + geom_line() + 
+  scale_x_continuous(breaks = seq(2013, 2018, 1))
+
+annual_ridership %>% filter(Company == "Uber" & Year < 2019) %>%
+  ggplot(aes(Year, Annual_Total, col = Company)) +
+  geom_point() + geom_line() +
+  scale_x_continuous(breaks = seq(2013, 2018, 1))
+
+annual_ridership %>% filter(Company == "MTA" & Year < 2019) %>%
+  ggplot(aes(Year, Annual_Total, col = Company)) +
+  geom_point() + geom_line()
+
+annual_ridership %>% ggplot(aes(Year, Company, col = Annual_Total)) + 
+  geom_point(size = 2)
+
+citi_riders %>% ggplot(aes(Year, Total_Trips_or_Passengers)) + geom_jitter()
+
+uber_riders %>% ggplot(aes(Year, Total_Trips_or_Passengers, col = Month_Name)) + 
+  geom_jitter()
