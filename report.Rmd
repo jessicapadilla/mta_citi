@@ -1,5 +1,5 @@
 ---
-title: "The MTA Versus Citi Bike and Uber"
+title: "The MTA Versus Citi Bike"
 author: "Jessica Padilla"
 date: "September 27, 2019"
 output:
@@ -8,41 +8,37 @@ output:
 
 ## Introduction
 
-The Metropolitan Transportation Authority (MTA) is responsible for overseeing the transportation network throughout New York and its surrounding regions.  The MTA consists of New York City Transit, Long Island Railroad, Metro-North Railroad, Staten Island Railway, Regional Bus Operations, and B&T (Bridges and Tunnels).  For this project, we focus on the the subways provided by the MTA.
+The Metropolitan Transportation Authority (MTA) is responsible for overseeing the transportation network throughout New York City and its surrounding regions.  The MTA consists of New York City Transit, Long Island Railroad, Metro-North Railroad, Staten Island Railway, Regional Bus Operations, and B&T (Bridges and Tunnels).  For this project, we focus on the New York City Transit subways provided by the MTA.
 
 In 1979, the subway system was completely deteoriated.  In order to revive the system, the MTA needed more funds than the State of New York could provide annually.  As a result, the MTA continuously sold bonds and took on several loans to rebuild infrastructure, in hopes that the debt would eventually be paid off by fare revenue.  However, many decades later, there is a decrease in subway ridership, and the MTA debt is approaching 42 billion dollars.  But why is subway ridership declining?  Is the MTA to blame, or are people looking to other forms of transportation?
 
-In 2011, Uber was launched in New York City.  Uber is a ride service company, where people can request trips through the ease of a phone app.
+In 2013, a bike share program called Citi Bike was launched throughout NYC.  Citi Bike allows people to borrow bikes and pay either on an hourly basis, daily basis, or through an annual membership.  Because it is eco-friendly in nature, user-friendly, and very affordable, it has attracted thousands of people throughout the city.  Several years later after its launch, the number of Citi Bike users continues to increase and shows no sign of slowing down.
 
-Furthermore, in 2013, a bike share program called Citi Bike was launched throughout NYC.  Citi Bike allows people to pay either on an hourly basis, daily basis, or through an annual membership.  
+Here we discuss how the decrease in subway ridership is correlated to the increase in Citi Bike services.  We also provide suggestions on how MTA finances can be re-allocated to help subways remain competitive in the transporation industry.
 
-Here we discuss how the decrease in subway ridership is correlated to the increase in Citi Bike and Uber services.  We also provide suggestions on how MTA finances can be re-allocated to help subways remain competitive in the transporation industry.
-
-
+&nbsp;
 
 ## Methods
 
-Information in regards to MTA subway services was obtained through the "Performance Dashboard" of the official MTA web site (http://dashboard.mta.info).  Data was exported from the site in the form of .csv files.
+Annual and average subway ridership totals were retrieved from the MTA web site (http://web.mta.info/nyct/facts/ridership/) through web scraping.  This involved extracting text and tables from the html code within the web page and converting them into data tables.  To obtain a breakdown of monthly ridership totals, data from 144 .txt files were imported from the MTA web site (http://web.mta.info/developers/turnstile.html)  using the readr package within R.
 
-Subway ridership information was also retrieved from the MTA web site (http://web.mta.info/nyct/facts/ridership/).  However, since no export option was available, data was extracted using web scraping.  This method involves extracting text and tables from the html code that generates the web page.  This was done by using the rvest package within R.
+Information in regards to MTA subway services was obtained through the "Performance Dashboard" of the MTA web site (http://dashboard.mta.info).  Data was retrieved from a total of 4 .csv files.
 
-MTA budget and revenue data were found on the "MTA Fiscal Dashboard" of the Citizens Budget Commission web site (https://cbcny.org/research/mta-fiscal-dashboard).  Since no export option was available, this data was also extracted using web scraping.  
+MTA budget and revenue data were found through the "MTA Fiscal Dashboard" of the Citizens Budget Commission web site (https://cbcny.org/research/mta-fiscal-dashboard).  Data was exported from the site into 3 .csv files. 
 
-Citi Bike data was retrieved from the official Citi Bike web site (https://www.citibikenyc.com/system-data).  All data was exported in the form of .csv files.
+Citi Bike data was retrieved from the official Citi Bike web site (https://www.citibikenyc.com/system-data).  All quarterly data was exported from a total of 22 .csv files.
 
-Uber ridership data was obtained from the NYC OpenData site (https://data.cityofnewyork.us/Transportation/FHV-Base-Aggregate-Report/2v9c-2k7f/data).  Information pertaining to Uber was specifically found in the FHV Base Aggregate Report found on the site.
+All of the data was, then, imported into R.  Data was filtered to only include information pertaining to the subway system and Citi Bike.  It was also filtered up to and including the year 2018, since the year 2019 is not yet completed.  Wrangling was, then, performed to clean any relevant data and format it for further analysis.  After the data was cleaned, all of the subway and Citi Bike ridership data was merged into one table.  This was done using the functions from the tidyverse package within R.
 
-All of the data was, then, imported into R.
+The ggplot2 package was used within R as the primary tool for data visualization techniques.  Graphs generated with this package were used to demonstrate trends and new findings.
 
-Data was filtered to only include information pertaining to the subway system, Citi Bike, and Uber.  Wrangling was performed to clean any relevant data and format it for further analysis.
-
-The ggplot2 package was used within R as the primary tool for data visualization techniques.  Graphs generated with this package were used to clarify trends and demonstrate new findings.  
 
 
 ## Results
 
 The debt of the MTA has grown significantly over the years and is project to reach $42 billion by the year 2022.  While fare revenue has been able to offset a bit of the debt, fare revenue has reached a standstill.  Data obtained from the MTA Fiscal Dashboard (courtest of the Citizens Budget Commission) shows that although the fare revenue is much larger than what it was in 2007, the amount of fare revenue has slowed down since 2013.  In fact, there was a slight decrease in fare revenue in 2018.
 
+&nbsp;
 
 ```{r, subway fare revenue, echo = FALSE, message = FALSE, results = 'hide', fig.height = 3.65}
 
@@ -135,26 +131,28 @@ subway_riders <- subway_riders %>%
 ## check the table
 head(subway_riders)
 
-## create a graph for subway ridership during weekdays
-weekdays <- subway_riders %>% 
-  ggplot(aes(Year, Average_Weekdays)) + 
-  geom_bar(stat = "identity", fill = "black") + 
-  scale_x_continuous(breaks = seq(2013, 2018, 1)) + 
-  coord_cartesian(ylim = c(4000000, 6000000)) +
-  xlab("Year") + ylab("Average Number of Riders") +
-  ggtitle("Weekdays") +
+## gather the subway riders data
+subway_riders <- subway_riders %>% 
+  gather(Category, Riders, Average_Weekdays:Annual_Total)
+
+## create a graph showing the average number of riders on weekdays
+weekdays <- subway_riders %>% filter(Category == "Average_Weekdays") %>%
+  ggplot(aes(Year, Riders)) + 
+  geom_point(color = "red", show.legend = FALSE) + 
+  geom_line(color = "red", show.legend = FALSE) + 
+  coord_cartesian(ylim = c(5400000, 5700000)) +
+  xlab("Year") + ylab("Average Number of Riders") + ggtitle("Weekdays") +
   theme_bw()
 
-## create a graph for subway ridership during weekends
-weekends <- subway_riders %>% 
-  ggplot(aes(Year, Average_Weekends)) + 
-  geom_bar(stat = "identity", fill = "black") + 
-  scale_x_continuous(breaks = seq(2013, 2018, 1)) + 
-  coord_cartesian(ylim = c(4000000, 6000000)) +
-  xlab("Year") + ylab("Average Number of Riders") +
-  ggtitle("Weekends") +
+## create a graph showing the average number of riders on weekends
+weekends <- subway_riders %>% filter(Category == "Average_Weekends") %>%
+  ggplot(aes(Year, Riders, col = )) + 
+  geom_point(color = "purple", show.legend = FALSE) + 
+  geom_line(color = "purple", show.legend = FALSE) + 
+  coord_cartesian(ylim = c(5400000, 6000000)) +
+  xlab("Year") + ylab("Average Number of Riders") + ggtitle("Weekends") +
   theme_bw()
-
+                         
 ## put the graphs side by side
 grid.arrange(weekdays, weekends, ncol = 2)
 ```
