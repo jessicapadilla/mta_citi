@@ -254,114 +254,499 @@ grid.arrange(add_platform, add_train, ncol = 2)
 subway <- function(x){
   file <- read_csv(x)
   revised <- file %>% 
-    filter(!DESC == "RECOVR AUD") %>%            ## remove rows with RECOVR AUD, which means there was an error with the device during that time period
     filter(TIME >= 72000) %>%                    ## filter the data for 20:00 and after
     select(-c(EXITS, DESC)) %>%                  ## remove unnecessary columns
-    rename(C_A = `C/A`,                          ## rename columns
-           Unit = UNIT, 
-           Scp = SCP, 
-           Station = STATION, 
-           Line = LINENAME,
-           Division = DIVISION, 
-           Date = DATE, 
-           Time = TIME,
-           Entries = ENTRIES) 
-  revised$Date <- mdy(revised$Date)              ## convert the date column to dates
-  revised$Entries <- as.numeric(revised$Entries) ## convert the entries column to numbers 
+    rename(c_a = `C/A`,                          ## rename columns
+           unit = UNIT, 
+           scp = SCP, 
+           station = STATION, 
+           line = LINENAME,
+           division = DIVISION, 
+           date_measured = DATE, 
+           time = TIME,
+           entries = ENTRIES)
+  revised$date_measured <- mdy(revised$date_measured)              ## convert the date column to dates
+  revised$entries <- as.numeric(revised$entries) ## convert the entries column to numbers 
   return(revised)
 }
 
-## get subway data for beginning of jan 2015
-start_jan2015 <- "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150103.txt" %>% subway()
+jan2015 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150103.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150110.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150117.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150124.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150131.txt"
+)
 
-## get subway data for end of jan 2015
-end_jan2015 <- "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150207.txt" %>% subway()
+jan2015 <- lapply(jan2015, subway) %>% bind_rows()
 
-## combine all the jan 2015 data
-## filter it to include data from the beginning and end of january
-jan2015 <- rbind(start_jan2015, end_jan2015) %>% 
-  filter(Date == "2015-01-01" | Date == "2015-01-31")
+feb2015 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150207.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150214.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150221.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150228.txt"
+)
 
-## arrange the data to include counts from the same device (scp)
-## create a column to calculate the difference between counts at the beginning and end of the month
-## remove the time column
-jan2015 <- jan2015 %>% arrange(Scp, Station, Line) %>% spread(Date, Entries) %>% 
-  rename(Start_Passengers = "2015-01-01", End_Passengers = "2015-01-31") %>%
-  mutate(Total_Passengers = End_Passengers - Start_Passengers) %>%
-  select(-Time)
+feb2015 <- lapply(feb2015, subway) %>% bind_rows()
 
-## check the table
-head(jan2015)
+mar2015 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150307.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150314.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150321.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150328.txt"
+)
 
-## get subway data for beginning of feb 2015
-start_feb2015 <- "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150207.txt" %>% subway()
+mar2015 <- lapply(mar2015, subway) %>% bind_rows()
 
-## get subway data for end of feb 2015
-end_feb2015 <- "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150307.txt" %>% subway()
+apr2015 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150404.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150411.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150418.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150425.txt"
+)
 
-## combine all the feb 2015 data
-## filter it to include data from the beginning and end of february
-feb2015 <- rbind(start_feb2015, end_feb2015) %>% 
-  filter(Date == "2015-02-01" | Date == "2015-02-28")
+apr2015 <- lapply(apr2015, subway) %>% bind_rows()
 
-## arrange the data to include counts from the same device (scp)
-## create a column to calculate the difference between counts at the beginning and end of the month
-## remove the time column
-feb2015 <- feb2015 %>% arrange(Scp, Station, Line) %>% spread(Date, Entries) %>% 
-  rename(Start_Passengers = "2015-02-01", End_Passengers = "2015-02-28") %>%
-  mutate(Total_Passengers = End_Passengers - Start_Passengers) %>%
-  select(-Time)
+may2015 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150502.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150509.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150516.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150523.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150530.txt"
+)
 
-## check the table
-head(feb2015)
+may2015 <- lapply(may2015, subway) %>% bind_rows()
 
-## get subway data for beginning of mar 2015
-start_mar2015 <- "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150307.txt" %>% subway()
+jun2015 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150606.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150613.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150620.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150627.txt"
+)
 
-## get subway data for end of mar 2015
-end_mar2015 <- "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150404.txt" %>% subway()
+jun2015 <- lapply(jun2015, subway) %>% bind_rows()
 
-## combine all the mar 2015 data
-## filter it to include data from the beginning and end of march
-## remove the time column
-mar2015 <- rbind(start_mar2015, end_mar2015) %>% 
-  filter(Date == "2015-03-01" | Date == "2015-03-31") %>% select(-Time)
+jul2015 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150704.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150711.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150718.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150725.txt"
+)
 
-## arrange the data to include counts from the same device (scp)
-## create a column to calculate the difference between counts at the beginning and end of the month
-mar2015 <- mar2015 %>% arrange(Scp, Station, Line) %>% spread(Date, Entries) %>% 
-  rename(Start_Passengers = "2015-03-01", End_Passengers = "2015-03-31") %>%
-  mutate(Total_Passengers = End_Passengers - Start_Passengers)
+jul2015 <- lapply(jul2015, subway) %>% bind_rows()
 
-## check the table
-head(mar2015)
+aug2015 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150801.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150808.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150815.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150822.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150829.txt"
+)
 
-## get subway data for beginning of apr 2015
-start_apr2015 <- "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150404.txt" %>% subway()
+aug2015 <- lapply(aug2015, subway) %>% bind_rows()
 
-## get subway data for end of apr 2015
-end_apr2015 <- "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150502.txt" %>% subway()
+sep2015 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150905.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150912.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150919.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_150926.txt"
+)
 
-## combine all the apr 2015 data
-## filter it to include data from the beginning and end of april
-apr2015 <- rbind(start_apr2015, end_apr2015) %>% 
-  filter(Date == "2015-04-01" | Date == "2015-04-30")
+sep2015 <- lapply(sep2015, subway) %>% bind_rows()
 
-## arrange the data to include counts from the same device (scp)
-## create a column to calculate the difference between counts at the beginning and end of the month
-## remove the time column
-apr2015 <- apr2015 %>% arrange(Scp, Station, Line) %>% spread(Date, Entries) %>% 
-  rename(Start_Passengers = "2015-04-01", End_Passengers = "2015-04-30") %>%
-  mutate(Total_Passengers = End_Passengers - Start_Passengers) %>% select(-Time)
+oct2015 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_151003.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_151010.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_151017.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_151024.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_151031.txt"
+)
 
-## check the table
-head(apr2015)
+oct2015 <- lapply(oct2015, subway) %>% bind_rows()
 
+nov2015 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_151107.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_151114.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_151121.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_151128.txt"
+)
 
+nov2015 <- lapply(nov2015, subway) %>% bind_rows()
 
+dec2015 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_151205.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_151212.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_151219.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_151226.txt"
+)
 
+dec2015 <- lapply(dec2015, subway) %>% bind_rows()
 
+jan2016 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160102.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160109.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160116.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160123.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160130.txt"
+)
 
+jan2016 <- lapply(jan2016, subway) %>% bind_rows()
+
+feb2016 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160206.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160213.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160220.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160227.txt"
+)
+
+feb2016 <- lapply(feb2016, subway) %>% bind_rows()
+
+mar2016 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160305.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160312.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160319.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160326.txt"
+)
+
+mar2016 <- lapply(mar2016, subway) %>% bind_rows()
+
+apr2016 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160402.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160409.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160416.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160423.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160430.txt"
+)
+
+apr2016 <- lapply(apr2016, subway) %>% bind_rows()
+
+may2016 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160507.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160514.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160521.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160528.txt"
+)
+
+may2016 <- lapply(may2016, subway) %>% bind_rows()
+
+jun2016 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160604.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160611.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160618.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160625.txt"
+)
+
+jun2016 <- lapply(jun2016, subway) %>% bind_rows()
+
+jul2016 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160702.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160709.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160716.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160723.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160730.txt"
+)
+
+jul2016 <- lapply(jul2016, subway) %>% bind_rows()
+
+aug2016 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160806.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160813.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160820.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160827.txt"
+)
+
+aug2016 <- lapply(aug2016, subway) %>% bind_rows()
+
+sep2016 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160903.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160910.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160917.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_160924.txt"
+)
+
+sep2016 <- lapply(sep2016, subway) %>% bind_rows()
+
+oct2016 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_161001.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_161008.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_161015.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_161022.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_161029.txt"
+)
+
+oct2016 <- lapply(oct2016, subway) %>% bind_rows()
+
+nov2016 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_161105.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_161112.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_161119.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_161126.txt"
+)
+
+nov2016 <- lapply(nov2016, subway) %>% bind_rows()
+
+dec2016 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_161203.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_161210.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_161217.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_161224.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_161231.txt"
+)  
+
+dec2016 <- lapply(dec2016, subway) %>% bind_rows()  
+
+jan2017 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170107.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170114.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170121.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170128.txt"
+)
+
+jan2017 <- lapply(jan2017, subway) %>% bind_rows()
+
+feb2017 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170204.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170211.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170218.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170225.txt"
+)
+
+feb2017 <- lapply(feb2017, subway) %>% bind_rows()
+
+mar2017 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170304.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170311.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170318.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170325.txt"
+)
+
+mar2017 <- lapply(mar2017, subway) %>% bind_rows()
+
+apr2017 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170401.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170408.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170415.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170422.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170429.txt"
+)
+
+apr2017 <- lapply(apr2017, subway) %>% bind_rows()
+
+may2017 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170506.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170513.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170520.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170527.txt"
+)
+
+may2017 <- lapply(may2017, subway) %>% bind_rows()
+
+jun2017 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170603.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170610.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170617.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170624.txt"
+)
+
+jun2017 <- lapply(jun2017, subway) %>% bind_rows()
+
+jul2017 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170701.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170708.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170715.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170722.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170729.txt"
+)
+
+jul2017 <- lapply(jul2017, subway) %>% bind_rows()
+
+aug2017 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170805.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170812.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170819.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170826.txt"
+)
+
+aug2017 <- lapply(aug2017, subway) %>% bind_rows()
+
+sep2017 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170902.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170909.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170916.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170923.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_170930.txt"
+)
+
+sep2017 <- lapply(sep2017, subway) %>% bind_rows()
+
+oct2017 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_171007.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_171014.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_171021.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_171028.txt"
+)
+
+oct2017 <- lapply(oct2017, subway) %>% bind_rows()
+
+nov2017 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_171104.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_171111.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_171118.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_171125.txt"
+)
+
+nov2017 <- lapply(nov2017, subway) %>% bind_rows()
+
+dec2017 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_171202.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_171209.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_171216.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_171223.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_171230.txt"
+)
+
+dec2017 <- lapply(dec2017, subway) %>% bind_rows()
+
+jan2018 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180106.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180113.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180120.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180127.txt"
+)
+
+jan2018 <- lapply(jan2018, subway) %>% bind_rows()
+
+feb2018 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180203.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180210.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180217.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180224.txt"
+)
+
+feb2018 <- lapply(feb2018, subway) %>% bind_rows()
+
+mar2018 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180303.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180310.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180317.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180324.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180331.txt"
+)
+
+mar2018 <- lapply(mar2018, subway) %>% bind_rows()
+
+apr2018 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180407.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180414.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180421.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180428.txt"
+)
+
+apr2018 <- lapply(apr2018, subway) %>% bind_rows()
+
+may2018 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180505.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180512.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180519.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180526.txt"
+)
+
+may2018 <- lapply(may2018, subway) %>% bind_rows()
+
+jun2018 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180602.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180609.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180616.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180623.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180630.txt"
+)
+
+jun2018 <- lapply(jun2018, subway) %>% bind_rows()
+
+jul2018 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180707.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180714.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180721.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180728.txt"
+)
+
+jul2018 <- lapply(jul2018, subway) %>% bind_rows()
+
+aug2018 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180804.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180811.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180818.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180825.txt"
+)
+
+aug2018 <- lapply(aug2018, subway) %>% bind_rows()
+
+sep2018 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180901.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180908.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180915.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180922.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_180929.txt"
+)
+
+sep2018 <- lapply(sep2018, subway) %>% bind_rows()
+
+oct2018 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_181006.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_181013.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_181020.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_181027.txt"
+)
+
+oct2018 <- lapply(oct2018, subway) %>% bind_rows()
+
+nov2018 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_181103.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_181110.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_181117.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_181124.txt"
+)
+
+nov2018 <- lapply(nov2018, subway) %>% bind_rows()
+
+dec2018 <- c(
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_181201.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_181208.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_181215.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_181222.txt",
+  "http://web.mta.info/developers/data/nyct/turnstile/turnstile_181229.txt"
+)
+
+dec2018 <- lapply(dec2018, subway) %>% bind_rows()
+
+subway_riders <- rbind(
+  jan2015, feb2015, mar2015, apr2015,
+  may2015, jun2015, jul2015, aug2015,
+  sep2015, oct2015, nov2015, dec2015,
+  jan2016, feb2016, mar2016, apr2016,
+  may2016, jun2016, jul2016, aug2016,
+  sep2016, oct2016, nov2016, dec2016,
+  jan2017, feb2017, mar2017, apr2017,
+  may2017, jun2017, jul2017, aug2017,
+  sep2017, oct2017, nov2017, dec2017,
+  jan2018, feb2018, mar2018, apr2018,
+  may2018, jun2018, jul2018, aug2018,
+  sep2018, oct2018, nov2018, dec2018
+)
+
+subway_riders <- subway_riders[order(subway_riders$scp, 
+                                     subway_riders$station, 
+                                     subway_riders$unit, 
+                                     subway_riders$c_a, 
+                                     subway_riders$date_measured, 
+                                     -subway_riders$time),]
+
+subway_riders <- subway_riders %>% 
+  distinct(scp, station, unit, c_a, date_measured, .keep_all = TRUE)
+
+subway_riders <- subway_riders %>% group_by(scp, station, line) %>%
+  arrange(scp, station, line) %>%
+  mutate(total_riders = entries - lag(entries, default = first(entries)))
 
 ## get the Citi Bikes Q3 2013 data
 citi_q32013 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_launch_to_sep2013.csv")
@@ -608,3 +993,6 @@ weekends <- subway_riders %>% filter(Category == "Average_Weekends") %>%
 
 ## put the graphs side by side
 grid.arrange(weekdays, weekends, ncol = 2)
+
+min(start_mar2015$Date)
+max(end_mar2015$Date)
