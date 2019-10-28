@@ -15,11 +15,12 @@ mta_revenue <- mta_revenue %>% select(-c("Fifty2525", "Date Prefix",
                                          "Revenue Type Note", "Adjustments Outcome",
                                          "No-Adjustments Value", "Date",
                                          "Framework Selection Calculation")) %>%
-  rename(Business_Line_Group = 'Business Line (group)',
-         Business_Line = 'Business Line',
-         Revenue_Description = Description1,
-         Revenue_Type = 'Revenue and Expense Type',
-         Revenue_Cost = Value)
+  rename(business_line_group = 'Business Line (group)',
+         business_line = 'Business Line',
+         revenue_description = Description1,
+         revenue_type = 'Revenue and Expense Type',
+         year = Year,
+         revenue_value = Value)
 
 ## change all NA values to 0
 mta_revenue[is.na(mta_revenue)] = 0
@@ -29,99 +30,101 @@ head(mta_revenue)
 
 ## create a graph for subway fare revenue totals each year
 ## exclude year 2019 since the year is not yet completed
-mta_revenue %>% filter(Year <= 2018 & Revenue_Description == "Subway") %>%
-  ggplot(aes(Year, Revenue_Cost)) + 
+mta_revenue %>% filter(year <= 2018 & revenue_description == "Subway") %>%
+  ggplot(aes(year, revenue_value)) + 
   geom_bar(stat = "identity", fill = "black") +
   scale_x_continuous(breaks = seq(2007, 2018, 1)) + 
   xlab("Year") + ylab("Total Revenue (millions)") +
   ggtitle("MTA Subway Fare Revenue") + 
   theme_bw()
 
-## retrieve annual subway ridership data
-subway_riders_url <- "http://web.mta.info/nyct/facts/ridership/"
+## set the link for subway ridership totals
+subway_totals_url <- "http://web.mta.info/nyct/facts/ridership/"
 
 ## get the html code
-subway_riders_html <- read_html(subway_riders_url)
+subway_totals_html <- read_html(subway_totals_url)
 
 ## get the tables from the html code
-subway_riders_table <- subway_riders_html %>% html_nodes("table")
+subway_totals_table <- subway_totals_html %>% html_nodes("table")
 
 ## find the table
-subway_riders_table
+subway_totals_table
 
-## get the subway table
-subway_riders_table[[2]]
+## get the subway totals table
+subway_totals_table[[2]]
 
 ## turn the table to a data frame
-subway_riders <- subway_riders_table[[2]] %>% html_table
+subway_totals <- subway_totals_table[[2]] %>% html_table
 
 ## check the structure of the subway ridership data
-str(subway_riders)
+str(subway_totals)
 
 ## change the year column to numbers
-subway_riders[,1] <- subway_riders[,1] %>% as.numeric()
+subway_totals[,1] <- subway_totals[,1] %>% as.numeric()
+
+## create a function to remove commas from a column and turn the column to numbers
+numbers <- function(x){
+  x <- str_replace_all(x, ",", "")
+  x <- as.numeric(x)
+}
 
 ## remove the commas from the remaining columns and convert them to numbers
-subway_riders[,2] <- subway_riders[,2] %>% str_replace_all(",","") %>% as.numeric()
-subway_riders[,3] <- subway_riders[,3] %>% str_replace_all(",","") %>% as.numeric()
-subway_riders[,4] <- subway_riders[,4] %>% str_replace_all(",","") %>% as.numeric()
-subway_riders[,5] <- subway_riders[,5] %>% str_replace_all(",","") %>% as.numeric()
-subway_riders[,6] <- subway_riders[,6] %>% str_replace_all(",","") %>% as.numeric()
+subway_totals[,2:6] <- lapply(subway_totals[,(2:6)], numbers)
 
 ## convert the data to a tibble
-subway_riders <- subway_riders %>% as_tibble()
+subway_totals <- subway_totals %>% as_tibble()
 
 ## rename the columns
-subway_riders <- subway_riders %>% 
-  rename(Average_Weekdays = `Average Weekday`,
-         Average_Saturdays = `Average Saturday`,
-         Average_Sundays = `Average Sunday`,
-         Average_Weekends = `Average Weekend`,
-         Annual_Total = `Annual Total`)
+subway_totals <- subway_totals %>% 
+  rename(year = Year,
+         average_weekdays = `Average Weekday`,
+         average_saturdays = `Average Saturday`,
+         average_sundays = `Average Sunday`,
+         average_weekends = `Average Weekend`,
+         annual_total = `Annual Total`)
 
 ## check the table
-head(subway_riders)
+head(subway_totals)
 
 ## create a graph showing the annual number of subway riders
-subway_riders %>% 
-  ggplot(aes(Year, Annual_Total)) + 
+subway_totals %>% 
+  ggplot(aes(year, annual_total)) + 
   geom_point(color = "purple", show.legend = FALSE) + 
   geom_line(color = "purple", show.legend = FALSE) + 
   coord_cartesian(ylim = c(1650000000, 1800000000)) +
-  xlab("Year") + ylab("Total Number of Riders") + ggtitle("Annual Subway Ridership") +
-  theme_bw()
+  xlab("Year") + ylab("Total Number of Riders") + 
+  ggtitle("Annual Subway Ridership") + theme_bw()
 
-## retrieve subway totals data
-subway_totals <- read_csv("https://github.com/jessicapadilla/mta-mismanagement/raw/master/subway_service_delivered.csv")
+## retrieve train totals data
+subway_trains <- read_csv("https://github.com/jessicapadilla/mta-mismanagement/raw/master/subway_service_delivered.csv")
 
 ## check the structure of the table
-str(subway_totals)
+str(subway_trains)
 
 ## remove unwanted columns and rename some columns
-subway_totals <- subway_totals %>% select(-division) %>%
-  rename(Month = "month", Line = "line",
-         Scheduled_Trains = "num_sched_trains", Actual_Trains = "num_actual_trains",
-         Ratio_Scheduled_to_Actual_Trains = "service delivered")
+subway_trains <- subway_trains %>% select(-division) %>%
+  rename(scheduled_trains = "num_sched_trains", actual_trains = "num_actual_trains",
+         ratio_scheduled_to_actual_trains = "service delivered")
 
 ## add a year column with the values from the month column
-subway_totals <- subway_totals %>% mutate(Year = Month)
+subway_trains <- subway_trains %>% mutate(year = month)
 
 ## edit the year column by removing the month and change the year to numbers
-subway_totals$Year <- subway_totals$Year %>% 
+subway_trains$year <- subway_trains$year %>% 
   str_replace("^(\\d{4})-(\\d{2})$", "\\1") %>% as.numeric()
 
 ## check the subway totals table
-head(subway_totals)
+head(subway_trains)
 
-## create a graph showing the total number of subways each year
+## create a graph showing the total number of trains each year
 ## exclude year 2019 since the year is not yet completed
-subway_totals %>% filter(Year < 2019) %>% 
-  mutate(Year = factor(Year)) %>% 
-  ggplot(aes(Scheduled_Trains, Actual_Trains, col = Line)) + 
-  geom_point(size = 2) + facet_grid(. ~ Year) +
+subway_trains %>% filter(year <= 2018) %>% 
+  mutate(year = factor(year)) %>% 
+  ggplot(aes(scheduled_trains, actual_trains, col = line)) + 
+  geom_point(size = 2) + facet_grid(. ~ year) +
   scale_color_discrete(name = "Subway Line") + xlim(0, 4000) + ylim(0, 4000) +
   xlab("Scheduled Number of Trains") + ylab("Actual Number of Trains") +
-  ggtitle("Total Number of Subways from 2015-2018") + theme_bw() +
+  ggtitle("Total Number of Subways") + theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ## retrieve subway incidents data
@@ -130,26 +133,26 @@ subway_incidents <- read_csv("https://github.com/jessicapadilla/mta-mismanagemen
 ## check the structure of the subway incidents table
 str(subway_incidents)
 
-## remove the division column and rename columns
+## remove the division column and rename the category column
 subway_incidents <- subway_incidents %>% select(-division) %>% 
-  rename(Month = month, Line = line, Type_of_Issue = category, Count = count)
+  rename(type_of_issue = category)
 
 ## add a year column using the values from the month column
-subway_incidents <- subway_incidents %>% mutate(Year = Month)
+subway_incidents <- subway_incidents %>% mutate(year = month)
 
 ## edit the year column by removing the month and change the year to numbers
-subway_incidents$Year <- subway_incidents$Year %>% 
+subway_incidents$year <- subway_incidents$year %>% 
   str_replace("^(\\d{4})-(\\d{2})$", "\\1") %>% as.numeric()
 
 ## check the different types of issues
-unique(subway_incidents$Type_of_Issue)
+unique(subway_incidents$type_of_issue)
 
 ## make the persons on trackbed/police/medical text shorter
-subway_incidents$Type_of_Issue <- subway_incidents$Type_of_Issue %>%
+subway_incidents$type_of_issue <- subway_incidents$type_of_issue %>%
   str_replace("Persons on Trackbed/Police/Medical", "Passenger")
 
 ## reorder the types of issue
-subway_incidents$Type_of_Issue <- factor(subway_incidents$Type_of_Issue, 
+subway_incidents$type_of_issue <- factor(subway_incidents$type_of_issue, 
                                          levels = c("Signals", "Stations and Structure", 
                                                     "Subway Car", "Track", 
                                                     "Passenger", "Other"))
@@ -159,15 +162,16 @@ head(subway_incidents)
 
 ## create a graph showing the number of subway-related incidents per year
 ## exclude 2019 since the year is not yet completed
-subway_incidents %>% filter(Year < 2019 & Type_of_Issue %in% c("Signals", "Stations and Structure", "Subway Car", "Track")) %>%
-  group_by(Year, Type_of_Issue) %>%
-  summarize(Total_Count = sum(Count)) %>%
-  ggplot(aes(Year, Total_Count)) + 
+subway_incidents %>% 
+  filter(year <= 2018 & type_of_issue %in% c("Signals", "Stations and Structure", "Subway Car", "Track")) %>%
+  group_by(year, type_of_issue) %>%
+  summarize(total_count = sum(count)) %>%
+  ggplot(aes(year, total_count)) + 
   geom_bar(stat = "identity", fill = "black") + 
   coord_cartesian(ylim = c(0, 300)) +
-  facet_wrap(.~Type_of_Issue, ncol = 2) +
+  facet_wrap(.~type_of_issue, ncol = 2) +
   xlab("Year") + ylab("Total Number of Incidents") +
-  ggtitle("Subway Incidents from 2015-2018") + theme_bw()
+  ggtitle("Subway Incidents") + theme_bw()
 
 ## retrieve subway platform times data
 subway_platform_times <- read_csv("https://github.com/jessicapadilla/mta-mismanagement/raw/master/subway_platform_time.csv")
@@ -175,20 +179,16 @@ subway_platform_times <- read_csv("https://github.com/jessicapadilla/mta-mismana
 ## check the structure of the subway platform table
 str(subway_platform_times)
 
-## edit and rename some columns
+## remove the division column and rename some columns
 subway_platform_times <- subway_platform_times %>% select(-"division") %>% 
-  rename(Month = "month", Line = "line", Period = "period",
-         Total_Passengers = "num_passengers", Additional_Platform_Time = "additional platform time")
-
-## edit the period column
-subway_platform_times$Period <- subway_platform_times$Period %>%
-  str_replace("offpeak", "Off-Peak") %>% str_replace("peak", "Peak")
+  rename(total_passengers = "num_passengers", 
+         additional_platform_time = "additional platform time")
 
 ## add a year column by adding values from the month column
-subway_platform_times <- subway_platform_times %>% mutate(Year = Month)
+subway_platform_times <- subway_platform_times %>% mutate(year = month)
 
 ## edit the year column by removing the month and change the year to numbers
-subway_platform_times$Year <- subway_platform_times$Year %>% 
+subway_platform_times$year <- subway_platform_times$year %>% 
   str_replace("^(\\d{4})-(\\d{2})$", "\\1") %>% as.numeric()
 
 ## check the subway platform table
@@ -196,9 +196,9 @@ head(subway_platform_times)
 
 ## create a graph for additional platform times
 ## exclude 2019 since the year is not yet completed
-add_platform <- subway_platform_times %>% filter(Year < 2019) %>% group_by(Year) %>%
-  summarize(Average_Additional_Platform = mean(Additional_Platform_Time)) %>%
-  ggplot(aes(Year, Average_Additional_Platform)) +
+add_platform <- subway_platform_times %>% filter(year <= 2018) %>% group_by(year) %>%
+  summarize(average_additional_platform = mean(additional_platform_time)) %>%
+  ggplot(aes(year, average_additional_platform)) +
   geom_point(color = "purple") + geom_line(color = "purple") +
   coord_cartesian(ylim = c(0, 2.0)) +
   xlab("Year") + ylab("Minutes") + ggtitle("Average Additional Platform Time") +
@@ -210,21 +210,16 @@ subway_train_times <- read_csv("https://github.com/jessicapadilla/mta-mismanagem
 ## check the structure of the subway train times table
 str(subway_train_times)
 
-## edit the columns
+## remvoe the divison column and rename some columns
 subway_train_times <- subway_train_times %>% select(-"division") %>% 
-  rename(Month = "month", Line = "line", Period = "period",
-         Total_Passengers = "num_passengers", 
-         Additional_Train_Time = "additional train time")
-
-## edit the period column
-subway_train_times$Period <- subway_train_times$Period %>%
-  str_replace("offpeak", "Off-Peak") %>% str_replace("peak", "Peak")
+  rename(total_passengers = "num_passengers", 
+         additional_train_time = "additional train time")
 
 ## add a year column using the values from the month column
-subway_train_times <- subway_train_times %>% mutate(Year = Month)
+subway_train_times <- subway_train_times %>% mutate(year = month)
 
 ## edit the year column by removing the month and change the year to numbers
-subway_train_times$Year <- subway_train_times$Year %>% 
+subway_train_times$year <- subway_train_times$year %>% 
   str_replace("^(\\d{4})-(\\d{2})$", "\\1") %>% as.numeric()
 
 ## check the subway train times table
@@ -232,16 +227,230 @@ head(subway_train_times)
 
 ## create a graph for additional train times
 ## exclude 2019 since the year is not yet completed
-add_train <- subway_train_times %>% filter(Year < 2019) %>% group_by(Year) %>%
-  summarize(Average_Additional_Train = mean(Additional_Train_Time)) %>%
-  ggplot(aes(Year, Average_Additional_Train)) +
+add_train <- subway_train_times %>% filter(year <= 2018) %>% group_by(year) %>%
+  summarize(average_additional_train = mean(additional_train_time)) %>%
+  ggplot(aes(year, average_additional_train)) +
   geom_point(color = "purple") + geom_line(color = "purple") +
   coord_cartesian(ylim = c(0, 2.0)) +
   xlab("Year") + ylab("Minutes") + ggtitle("Average Additional Train Time") +
   theme_bw()
 
 ## put the additional time graphs side by side
-grid.arrange(add_platform, add_train, ncol = 2)
+grid.arrange(add_platform, add_train, ncol = 1)
+
+## get the Citi Bikes Q3 2013 data
+citi_q32013 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_launch_to_sep2013.csv")
+
+## select the columns that are needed from the data
+citi_q32013 <- citi_q32013 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members`)
+
+## get the Citi Bikes Q4 2013 data
+citi_q42013 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_oct2013_to_dec2013.csv")
+
+## select the columns that are needed from the data
+citi_q42013 <- citi_q42013 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members`)
+
+## get the Citi Bikes Q1 2014 data
+citi_q12014 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jan2014_to_mar2014.csv")
+
+## select the columns that are needed from the data
+citi_q12014 <- citi_q12014 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members`)
+
+## get the Citi Bikes Q2 2014 data
+citi_q22014 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_apr2014_to_jun2014.csv")
+
+## select the columns that are needed from the data
+citi_q22014 <- citi_q22014 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Memberships Sold`) %>%
+  rename(`Total Annual Members` = `Total Annual Memberships Sold`)
+
+## get the Citi Bikes Q3 2014 data
+citi_q32014 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jul2014_to_sep2014.csv")
+
+## select the columns that are needed from the data
+citi_q32014 <- citi_q32014 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Memberships Sold`) %>%
+  rename(`Total Annual Members` = `Total Annual Memberships Sold`)
+
+## get the Citi Bikes Q4 2014 data
+citi_q42014 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_oct2014_to_dec2014.csv")
+
+## select the columns that are needed from the data
+citi_q42014 <- citi_q42014 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Memberships Sold`) %>%
+  rename(`Total Annual Members` = `Total Annual Memberships Sold`)
+
+## get the Citi Bikes Q1 2015 data
+citi_q12015 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jan2015_to_mar2015.csv")
+
+## select the columns that are needed from the data
+citi_q12015 <- citi_q12015 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>%
+  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
+
+## get the Citi Bikes Q2 2015 data
+citi_q22015 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_apr2015_to_jun2015.csv")
+
+## select the columns that are needed from the data
+citi_q22015 <- citi_q22015 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Memberships Sold`) %>% 
+  rename(`Total Annual Members` = `Total Annual Memberships Sold`)
+
+## get the Citi Bikes Q3 2015 data
+citi_q32015 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jul2015_to_sep2015.csv")
+
+## select the columns that are needed from the data
+citi_q32015 <- citi_q32015 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Memberships Sold`) %>% 
+  rename(`Total Annual Members` = `Total Annual Memberships Sold`)
+
+## get the Citi Bikes Q4 2015 data
+citi_q42015 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_oct2015_to_dec2015.csv")
+
+## select the columns that are needed from the data
+citi_q42015 <- citi_q42015 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
+  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
+
+## get the Citi Bikes Q1 2016 data
+citi_q12016 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jan2016_to_mar2016.csv")
+
+## select the columns that are needed from the data
+citi_q12016 <- citi_q12016 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
+  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
+
+## get the Citi Bikes Q2 2016 data
+citi_q22016 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_apr2016_to_jun2016.csv")
+
+## select the columns that are needed from the data
+citi_q22016 <- citi_q22016 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
+  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
+
+## get the Citi Bikes Q3 2016 data
+citi_q32016 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jul2016_to_sep2016.csv")
+
+## select the columns that are needed from the data
+citi_q32016 <- citi_q32016 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
+  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
+
+## get the Citi Bikes Q4 2016 data
+citi_q42016 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_oct2016_to_dec2016.csv")
+
+## select the columns that are needed from the data
+citi_q42016 <- citi_q42016 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
+  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
+
+## get the Citi Bikes Q1 2017 data
+citi_q12017 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jan2017_to_mar2017.csv")
+
+## select the columns that are needed from the data
+citi_q12017 <- citi_q12017 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
+  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
+
+## get the Citi Bikes Q2 2017 data
+citi_q22017 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_apr2017_to_jun2017.csv")
+
+## select the columns that are needed from the data
+citi_q22017 <- citi_q22017 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
+  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
+
+## get the Citi Bikes Q3 2017 data
+citi_q32017 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jul2017_to_sep2017.csv")
+
+## select the columns that are needed from the data
+citi_q32017 <- citi_q32017 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
+  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
+
+## get the Citi Bikes Q4 2017 data
+citi_q42017 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_oct2017_to_dec2017.csv")
+
+## select the columns that are needed from the data
+citi_q42017 <- citi_q42017 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
+  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
+
+## get the Citi Bikes Q1 2018 data
+citi_q12018 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jan2018_to_mar2018.csv")
+
+## select the columns that are needed from the data
+citi_q12018 <- citi_q12018 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
+  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
+
+## get the Citi Bikes Q2 2018 data
+citi_q22018 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_apr2018_to_jun2018.csv")
+
+## select the columns that are needed from the data
+citi_q22018 <- citi_q22018 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
+  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
+
+## get the Citi Bikes Q3 2018 data
+citi_q32018 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jul2018_to_sep2018.csv")
+
+## select the columns that are needed from the data
+citi_q32018 <- citi_q32018 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
+  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
+
+## get the Citi Bikes Q4 2018 data
+citi_q42018 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_oct2018_to_dec2018.csv")
+
+## select the columns that are needed from the data
+citi_q42018 <- citi_q42018 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
+  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
+
+## combine all the citi data
+citi_riders <- rbind(citi_q32013, citi_q42013, 
+                     citi_q12014, citi_q22014, citi_q32014, citi_q42014,
+                     citi_q12015, citi_q22015, citi_q32015, citi_q42015,
+                     citi_q12016, citi_q22016, citi_q32016, citi_q42016,
+                     citi_q12017, citi_q22017, citi_q32017, citi_q42017,
+                     citi_q12018, citi_q22018, citi_q32018, citi_q42018)
+
+## check the citi data
+head(citi_riders)
+
+## rename the columns
+citi_riders <- citi_riders %>% 
+  rename(date = Date, total_citi_trips = `Trips over the past 24-hours (midnight to 11:59pm)`, 
+         citi_annual_to_date = `Total Annual Members`)
+
+## convert the date column to dates
+citi_riders$date <- mdy(citi_riders$date)
+
+## add a year column using the values from the date column
+citi_riders <- citi_riders %>% mutate(year = date)
+
+## edit the year column by removing the rest of the date and change the year to numbers
+citi_riders$year <- citi_riders$year %>% 
+  str_replace("^(\\d{4})-(\\d{2})-(\\d{2})$", "\\1") %>% as.numeric()
+
+## add a month column using the values from the date column
+citi_riders <- citi_riders %>% mutate(month = date)
+
+## edit the year column by removing the rest of the date and change the year to numbers
+citi_riders$month <- citi_riders$month %>% 
+  str_replace("^(\\d{4})-(\\d{2})-(\\d{2})$", "\\2") %>% as.numeric()
+
+## create a graph showing the number of citi bike trips
+citi_riders %>% ggplot(aes(year, total_citi_trips)) + 
+  geom_jitter(color = "purple", alpha = 0.3, size = 3, width = 0.3) + 
+  scale_x_continuous(breaks = seq(2013, 2018, 1)) + 
+  xlab("Year") + ylab("Number of Daily Trips") +
+  ggtitle("Citi Bike Trips") +
+  theme_bw()
+
+## store the number of annual citi bike members at the end of each year
+## keep only the relevant columns
+annual_citi <- citi_riders %>% 
+  filter(date == "2013-12-31" | date == "2014-12-31" | date == "2015-12-31" | date == "2016-12-31" | date == "2017-12-31" | date == "2018-12-31") %>%
+  select(year, citi_annual_to_date)
+
+## merge the annual citi data to the annual subway data
+## rename the annual subway column
+## only keep the columns needed for correlation
+annual_riders <- left_join(subway_totals, annual_citi, by = "year") %>%
+  rename(annual_subway = annual_total)
+
+## create a graph showing the correlation between subway ridership and annual citi bike memberships
+## filter the data to 2015 and after since subway ridership started to decline in 2015
+annual_riders %>% filter(year >= 2015) %>%
+  ggplot(aes(citi_annual_to_date, average_weekends)) +
+  geom_point() + geom_line() + geom_abline() + theme_bw()
+
+cor(annual_riders$citi_annual_to_date, annual_riders$average_weekends)
+
+
 
 ## retrieve monthly subway ridership data
 ## devices that measure subway ridership do not reset the count to 0 every day
@@ -746,232 +955,49 @@ subway_riders <- subway_riders %>%
 
 subway_riders <- subway_riders %>% group_by(scp, station, line) %>%
   arrange(scp, station, line) %>%
-  mutate(total_riders = entries - lag(entries, default = first(entries)))
+  mutate(total_riders = entries - lag(entries, default = first(entries))) %>%
+  filter(total_riders > 0 & total_riders < 100000)
 
-## get the Citi Bikes Q3 2013 data
-citi_q32013 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_launch_to_sep2013.csv")
+subway_riders2 <- subway_riders %>% group_by(date_measured) %>% 
+  summarize(totals = sum(total_riders))
 
-## select the columns that are needed from the data
-citi_q32013 <- citi_q32013 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
+citi_riders <- citi_riders %>% rename(date_measured = Date)
+citi_riders$date_measured <- mdy(citi_riders$date_measured)
+citi_riders <- citi_riders %>% filter(total_citi <= 1000000)
 
-## get the Citi Bikes Q4 2013 data
-citi_q42013 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_oct2013_to_dec2013.csv")
+test <- left_join(subway_riders2, citi_riders, by = "date_measured")
 
-## select the columns that are needed from the data
-citi_q42013 <- citi_q42013 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
+test %>% ggplot(aes(totals, total_citi)) + geom_point()
+test %>% ggplot(aes(date_measured, totals)) + geom_point()
 
-## get the Citi Bikes Q1 2014 data
-citi_q12014 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jan2014_to_mar2014.csv")
+test %>% ggplot(aes(date_measured, totals))+ geom_point()
 
-## select the columns that are needed from the data
-citi_q12014 <- citi_q12014 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
+test <- test %>% mutate(year = date_measured)
 
-## get the Citi Bikes Q2 2014 data
-citi_q22014 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_apr2014_to_jun2014.csv")
+test$year <-test$year %>% str_replace("(\\d{4})-(\\d{2})-(\\d{2})", "\\1")
+test$year <- as.numeric(test$year)
 
-## select the columns that are needed from the data
-citi_q22014 <- citi_q22014 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
+test <- test %>% mutate(month = date_measured)
 
-## get the Citi Bikes Q3 2014 data
-citi_q32014 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jul2014_to_sep2014.csv")
+test$month <- test$month %>% str_replace("(\\d{4})-(\\d{2})-(\\d{2})", "\\2")
+test$month <- as.numeric(test$month)
 
-## select the columns that are needed from the data
-citi_q32014 <- citi_q32014 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
+test2 <- test %>% group_by(year, month) %>%
+  summarize(monthtotal = sum(totals))
 
-## get the Citi Bikes Q4 2014 data
-citi_q42014 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_oct2014_to_dec2014.csv")
+test2 %>% ggplot(aes(month, monthtotal)) + geom_point()
 
-## select the columns that are needed from the data
-citi_q42014 <- citi_q42014 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
 
-## get the Citi Bikes Q1 2015 data
-citi_q12015 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jan2015_to_mar2015.csv")
 
-## select the columns that are needed from the data
-citi_q12015 <- citi_q12015 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
-
-## get the Citi Bikes Q2 2015 data
-citi_q22015 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_apr2015_to_jun2015.csv")
-
-## select the columns that are needed from the data
-citi_q22015 <- citi_q22015 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
-
-## get the Citi Bikes Q3 2015 data
-citi_q32015 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jul2015_to_sep2015.csv")
-
-## select the columns that are needed from the data
-citi_q32015 <- citi_q32015 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
-
-## get the Citi Bikes Q4 2015 data
-citi_q42015 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_oct2015_to_dec2015.csv")
-
-## select the columns that are needed from the data
-citi_q42015 <- citi_q42015 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
-
-## get the Citi Bikes Q1 2016 data
-citi_q12016 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jan2016_to_mar2016.csv")
-
-## select the columns that are needed from the data
-citi_q12016 <- citi_q12016 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
-
-## get the Citi Bikes Q2 2016 data
-citi_q22016 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_apr2016_to_jun2016.csv")
-
-## select the columns that are needed from the data
-citi_q22016 <- citi_q22016 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
-
-## get the Citi Bikes Q3 2016 data
-citi_q32016 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jul2016_to_sep2016.csv")
-
-## select the columns that are needed from the data
-citi_q32016 <- citi_q32016 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
-
-## get the Citi Bikes Q4 2016 data
-citi_q42016 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_oct2016_to_dec2016.csv")
-
-## select the columns that are needed from the data
-citi_q42016 <- citi_q42016 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
-
-## get the Citi Bikes Q1 2017 data
-citi_q12017 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jan2017_to_mar2017.csv")
-
-## select the columns that are needed from the data
-citi_q12017 <- citi_q12017 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
-
-## get the Citi Bikes Q2 2017 data
-citi_q22017 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_apr2017_to_jun2017.csv")
-
-## select the columns that are needed from the data
-citi_q22017 <- citi_q22017 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
-
-## get the Citi Bikes Q3 2017 data
-citi_q32017 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jul2017_to_sep2017.csv")
-
-## select the columns that are needed from the data
-citi_q32017 <- citi_q32017 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
-
-## get the Citi Bikes Q4 2017 data
-citi_q42017 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_oct2017_to_dec2017.csv")
-
-## select the columns that are needed from the data
-citi_q42017 <- citi_q42017 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
-
-## get the Citi Bikes Q1 2018 data
-citi_q12018 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jan2018_to_mar2018.csv")
-
-## select the columns that are needed from the data
-citi_q12018 <- citi_q12018 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
-
-## get the Citi Bikes Q2 2018 data
-citi_q22018 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_apr2018_to_jun2018.csv")
-
-## select the columns that are needed from the data
-citi_q22018 <- citi_q22018 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
-
-## get the Citi Bikes Q3 2018 data
-citi_q32018 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jul2018_to_sep2018.csv")
-
-## select the columns that are needed from the data
-citi_q32018 <- citi_q32018 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
-
-## get the Citi Bikes Q4 2018 data
-citi_q42018 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_oct2018_to_dec2018.csv")
-
-## select the columns that are needed from the data
-citi_q42018 <- citi_q42018 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`)
-
-## combine all the citi data
-citi_riders <- rbind(citi_q32013, citi_q42013, 
-              citi_q12014, citi_q22014, citi_q32014, citi_q42014,
-              citi_q12015, citi_q22015, citi_q32015, citi_q42015,
-              citi_q12016, citi_q22016, citi_q32016, citi_q42016,
-              citi_q12017, citi_q22017, citi_q32017, citi_q42017,
-              citi_q12018, citi_q22018, citi_q32018, citi_q42018)
-
-## check the citi data
-head(citi_riders)
 
 ## change the date column to a date format
 citi_riders$Date <- mdy(citi_riders$Date)
 
 ## rename the trips column and add a Month column
-citi_riders <- citi_riders %>% rename(Total_Trips_or_Passengers = `Trips over the past 24-hours (midnight to 11:59pm)`) %>%
-  mutate(Month = Date) 
+citi_riders <- citi_riders %>% rename(total_citibike_trips = `Trips over the past 24-hours (midnight to 11:59pm)`)
 
-## edit the Month column to include the Month number only
-citi_riders$Month <- citi_riders$Month %>% str_replace("^(\\d{4})-(\\d{2})-(\\d{2})$", "\\2") %>% as.numeric()
+citi_riders <- citi_riders %>% rename(date_measured = Date)
 
-## add a Month name column
-citi_riders <- citi_riders %>% mutate(Month_Name = Month)
-
-## edit the Month name column to include the Month name only
-citi_riders <- citi_riders %>% mutate(Month_Name = case_when(
-  Month_Name == 1 ~ "January",
-  Month_Name == 2 ~ "February",
-  Month_Name == 3 ~ "March",
-  Month_Name == 4 ~ "April",
-  Month_Name == 5 ~ "May",
-  Month_Name == 6 ~ "June",
-  Month_Name == 7 ~ "July",
-  Month_Name == 8 ~ "August",
-  Month_Name == 9 ~ "September",
-  Month_Name == 10 ~ "October",
-  Month_Name == 11 ~ "November",
-  Month_Name == 12 ~ "December"
-))
-
-## add a Year column
-citi_riders <- citi_riders %>% mutate(Year = Date)
-
-## edit the Year column to include the Year only
-citi_riders$Year <- citi_riders$Year %>% 
-  str_replace("^(\\d{4})-(\\d{2})-(\\d{2})$", "\\1") %>% as.numeric()
-
-## add a Company column
-citi_riders$Company <- "Citi Bike"
-
-## check the citi bike table
-head(citi_riders)
-
-## create a graph for citi riders
-citi_riders %>% group_by(Company, Year, Month) %>%
-  summarize(Total_Trips = sum(Total_Trips_or_Passengers)) %>%
-  ggplot(aes(Year, Total_Trips)) +
-  geom_area()
-
-## create a table for annual citi totals
-annual_citi <- citi_riders %>% group_by(Year) %>%
-  summarize(Annual_Total = sum(Total_Trips_or_Passengers))
-
-## add a company column to the table
-annual_citi$Company <- "Citi Bike"
-
-## check the table
-head(annual_citi)
-
-## merge all the annual total tables
-annual_ridership <- rbind(annual_subway, annual_uber, annual_citi)
-
-## create a graph showing annual ridership between companies
-annual_ridership %>% filter(Company == "Citi Bike") %>%
-  ggplot(aes(Year, Annual_Total, col = Company)) +
-  geom_point() + geom_line() + 
-  scale_x_continuous(breaks = seq(2013, 2018, 1))
-
-annual_ridership %>% filter(Company == "Uber" & Year < 2019) %>%
-  ggplot(aes(Year, Annual_Total, col = Company)) +
-  geom_point() + geom_line() +
-  scale_x_continuous(breaks = seq(2013, 2018, 1))
-
-
-
-annual_ridership %>% ggplot(aes(Year, Company, col = Annual_Total)) + 
-  geom_point(size = 2)
-
-citi_riders %>% ggplot(aes(Year, Total_Trips_or_Passengers)) + geom_jitter()
-
-uber_riders %>% ggplot(aes(Year, Total_Trips_or_Passengers, col = Month_Name)) + 
-  geom_jitter()
 
 ## create a graph showing the average number of riders on weekdays
 weekdays <- subway_riders %>% filter(Category == "Average_Weekdays") %>%
