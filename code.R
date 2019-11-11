@@ -2,41 +2,301 @@
 library(tidyverse)
 library(rvest)
 library(gridExtra)
-library(lubridate)
+library(RColorBrewer)
+library(ggpubr)
 
 ## retrieve the mta revenue data
 mta_revenue <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/mta_revenue.csv")
 
-## check the structure of the mta revenue table
+## check the structure of the mta revenue data
 str(mta_revenue)
 
-## remove unwanted columns and rename some columns
-mta_revenue <- mta_revenue %>% select(-c("Fifty2525", "Date Prefix", 
-                                         "Revenue Type Note", "Adjustments Outcome",
-                                         "No-Adjustments Value", "Date",
-                                         "Framework Selection Calculation")) %>%
-  rename(business_line_group = 'Business Line (group)',
-         business_line = 'Business Line',
-         revenue_description = Description1,
-         revenue_type = 'Revenue and Expense Type',
-         year = Year,
-         revenue_value = Value)
+## select needed columns and rename them
+mta_revenue <- mta_revenue %>% 
+  select(c("Business Line (group)", "Business Line",
+           "Description1", "Revenue and Expense Type",
+           "Year", "Value")) %>%
+  rename(business_line_group = "Business Line (group)",
+         business_line = "Business Line",
+         revenue_description = "Description1",
+         revenue_type = "Revenue and Expense Type",
+         revenue_year = "Year",
+         revenue_value = "Value")
 
-## change all NA values to 0
-mta_revenue[is.na(mta_revenue)] = 0
+## change all NA values in the revenue value column to 0
+mta_revenue$revenue_value[is.na(mta_revenue$revenue_value)] = 0
 
-## check the mta revenue table
+## check the mta revenue data
 head(mta_revenue)
 
 ## create a graph for subway fare revenue totals each year
 ## exclude year 2019 since the year is not yet completed
-mta_revenue %>% filter(year <= 2018 & revenue_description == "Subway") %>%
-  ggplot(aes(year, revenue_value)) + 
+mta_revenue %>% filter(revenue_year <= 2018 & revenue_description == "Subway") %>%
+  ggplot(aes(revenue_year, revenue_value)) + 
   geom_bar(stat = "identity", fill = "black") +
   scale_x_continuous(breaks = seq(2007, 2018, 1)) + 
   xlab("Year") + ylab("Total Revenue (millions)") +
   ggtitle("MTA Subway Fare Revenue") + 
   theme_bw()
+
+## set the link for subway ridership data
+subway_ridership_url <- "http://web.mta.info/nyct/facts/ridership/"
+
+## get the html code from the web page
+subway_ridership_html <- read_html(subway_ridership_url)
+
+## get the html nodes
+subway_ridership_nodes <- subway_ridership_html %>% html_nodes("table")
+
+## check the html nodes
+subway_ridership_nodes
+
+## find the subway table
+subway_ridership_nodes[[2]]
+
+## turn the table to a data frame
+subway_ridership <- subway_ridership_nodes[[2]] %>% html_table
+
+## check the structure of the subway ridership data
+str(subway_ridership)
+
+## select and rename the needed columns
+## then convert the data to a tibble
+subway_ridership <- subway_ridership %>% 
+  select(c("Year", "Average Weekday", "Average Weekend")) %>% 
+  rename(ridership_year = "Year") %>% as_tibble()
+
+## gather the columns
+subway_ridership <- subway_ridership %>% 
+  gather(category, totals, "Average Weekday":"Average Weekend")
+
+## remove commas from the riders column and convert it to numbers
+subway_ridership$totals <- subway_ridership$totals %>%
+  str_replace_all(",", "") %>% as.numeric()
+
+## create a graph for average weekday subway ridership
+weekday <- subway_ridership %>% 
+  filter(category == "Average Weekday") %>%
+  ggplot(aes(ridership_year, totals)) + 
+  geom_point(color = "purple") + geom_line(color = "purple") +
+  scale_x_continuous(breaks = seq(2013, 2018, 1)) + 
+  coord_cartesian(ylim = c(5300000, 6000000)) +
+  xlab("Year") + ylab("Riders") +
+  ggtitle("Average Weekday Ridership") +
+  theme_bw()
+
+## create a graph for average weekend subway ridership
+weekend <- subway_ridership %>% 
+  filter(category == "Average Weekend") %>%
+  ggplot(aes(ridership_year, totals)) + 
+  geom_point(color = "red") + geom_line(color = "red") +
+  scale_x_continuous(breaks = seq(2013, 2018, 1)) + 
+  coord_cartesian(ylim = c(5300000, 6000000)) +
+  xlab("Year") + ylab("Riders") +
+  ggtitle("Average Weekend Ridership") +
+  theme_bw()
+
+## put the ridership graphs side by side
+grid.arrange(weekday, weekend, ncol = 2)
+
+## retrieve subway incidents data
+subway_incidents <- read_csv("https://github.com/jessicapadilla/mta-mismanagement/raw/master/subway_major_incidents.csv")
+
+## check the structure of the subway incidents table
+str(subway_incidents)
+
+## remove the division column and rename the category column
+subway_incidents <- subway_incidents %>% select(-division) %>% 
+  rename(issue = category)
+
+## add a year column using the values from the month column
+subway_incidents <- subway_incidents %>% mutate(issue_year = month)
+
+## edit the year column by removing the month
+## change the year to numbers
+subway_incidents$issue_year <- subway_incidents$issue_year %>% 
+  str_replace("^(\\d{4})-(\\d{2})$", "\\1") %>% as.numeric()
+
+## check the different types of issues
+unique(subway_incidents$issue)
+
+## make the persons on trackbed/police/medical text shorter
+subway_incidents$issue <- subway_incidents$issue %>%
+  str_replace("Persons on Trackbed/Police/Medical", "Passenger")
+
+## reorder the types of issue
+subway_incidents$issue <- factor(subway_incidents$issue,
+                                 levels = c("Signals", 
+                                            "Stations and Structure", 
+                                            "Subway Car", "Track", 
+                                            "Passenger", "Other"))
+
+## check the subway incidents table
+head(subway_incidents)
+
+## create a graph showing the number of subway incidents per year
+## exclude 2019 since the year is not yet completed
+subway_incidents %>% 
+  filter(issue_year <= 2018 & issue %in% c("Signals", "Stations and Structure", "Subway Car", "Track")) %>%
+  group_by(issue_year, issue) %>%
+  summarize(total_count = sum(count)) %>%
+  ggplot(aes(issue_year, total_count)) + 
+  geom_bar(stat = "identity", fill = "black") + 
+  coord_cartesian(ylim = c(0, 300)) +
+  facet_wrap(.~issue, ncol = 2) +
+  xlab("Year") + ylab("Total Number of Incidents") +
+  ggtitle("Subway Incidents") + theme_bw()
+
+## retrieve subway delivered data
+subway_delivered <- read_csv("https://github.com/jessicapadilla/mta-mismanagement/raw/master/subway_service_delivered.csv")
+
+## check the structure of the subway delivered table
+str(subway_delivered)
+
+## remove the division column and rename some columns
+subway_delivered <- subway_delivered %>% select(-division) %>%
+  rename(scheduled_trains = num_sched_trains, 
+         actual_trains = num_actual_trains)
+
+## add a year column
+subway_delivered <- subway_delivered %>% mutate(service_year = month)
+
+## edit the year column by removing the month and change the year to numbers
+subway_delivered$service_year <- subway_delivered$service_year %>% 
+  str_replace("^(\\d{4})-(\\d{2})$", "\\1") %>% as.numeric()
+
+## check the subway delivered times table
+head(subway_delivered)
+
+## create a graph showing the total number of subways each year
+## exclude year 2019 since the year is not yet completed
+subway_delivered %>% filter(service_year <= 2018) %>% 
+  mutate(service_year = factor(service_year)) %>% 
+  ggplot(aes(scheduled_trains, actual_trains, col = line)) + 
+  geom_point() + facet_grid(. ~ service_year) +
+  scale_color_discrete(name = "Subway Line") + xlim(0, 3500) + ylim(0, 3500) +
+  xlab("Scheduled Number of Trains") + ylab("Actual Number of Trains") +
+  ggtitle("Total Number of Subways from 2015-2018") + theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+## retrieve mta budget data
+mta_budget <- read_csv("https://github.com/jessicapadilla/mta-mismanagement/raw/master/mta_budget.csv")
+
+## check the mta budget table
+str(mta_budget)
+
+## remove unwanted columns and rename some columns
+mta_budget <- mta_budget %>% 
+  select(-c("Date Prefix", "Adjustments Outcome", "No-Adjustments Value", "Date", 
+            "Date (group)", "Business Line (group)")) %>%
+  rename(business_line = "Business Line", 
+         expense_description = "Description1",
+         expense_type = "Revenue and Expense Type",
+         budget_year = "Year",
+         expense_cost = "Value")
+
+## filter out the data for subways and buses
+mta_budget <- mta_budget %>% 
+  filter(business_line == "New York City Transit" | business_line == "MTA Bus Company")
+
+## check how many expense types there are
+unique(mta_budget$expense_type)
+
+## rename the expense types
+mta_budget$expense_type <- mta_budget$expense_type %>%
+  str_replace("Labor Expense", "Labor Expenses") %>%
+  str_replace("Non-labor Expense", "Non-Labor Expenses") %>%
+  str_replace("Debt Service", "Debt Services")
+
+## check how many expense descriptions there are for each expense type
+unique(mta_budget$expense_description[mta_budget$expense_type == "Labor Expenses"])
+unique(mta_budget$expense_description[mta_budget$expense_type == "Non-Labor Expenses"])
+unique(mta_budget$expense_description[mta_budget$expense_type == "Debt Services"])
+
+## rename some of the expense descriptions
+mta_budget <- mta_budget %>% mutate(expense_description = case_when(
+  expense_type == "Labor Expenses" & expense_description == "Payroll" ~ "Payroll",
+  expense_type == "Labor Expenses" & expense_description == "Overtime" ~ "Overtime",
+  expense_type == "Labor Expenses" & expense_description == "Health and Welfare" ~ "Health and Welfare",
+  expense_type == "Labor Expenses" & expense_description %in% c("OPEB Current Payment", "Pensions", "Other Fringe Benefits") ~ "Pensions and Other Benefits",
+  expense_type == "Labor Expenses" & expense_description == "Reimbursable Overhead" ~ "Reimbursable Overhead",
+  expense_type == "Non-Labor Expenses" & expense_description %in% c("Electric Power", "Fuel") ~ "Electricity and Fuel",
+  expense_type == "Non-Labor Expenses" & expense_description %in% c("Insurance", "Claims", "Other Business Expenses") ~ "Other Expenses",
+  expense_type == "Non-Labor Expenses" & expense_description %in% c("Paratransit Service Contracts", "Maintenance and Other Operating Contracts", "Professional Service Contracts") ~ "Contracts",
+  expense_type == "Non-Labor Expenses" & expense_description == "Materials and Supplies" ~ "Materials and Supplies",
+  expense_type == "Debt Services" & expense_description %in% c("Total MTA Bus Debt Service", "Total CRR Debt Service", "Total NYCT Debt Service", "Total SIRTOA Debt Service", "Total MTA HQ Debt Service for 2 Broadway Certificates of Participation", "Total B&T Debt Service") ~ "Debt Service"))
+
+## check the mta budget table
+head(mta_budget)
+
+## create a graph for mta budget totals each year
+mta_budget %>% group_by(budget_year, expense_type) %>% filter(budget_year <= 2019 & expense_cost > 0) %>%
+  summarize(total_cost = sum(expense_cost)) %>%
+  ggplot(aes(budget_year, total_cost)) + 
+  geom_bar(stat = "identity", fill = "black") +
+  scale_x_continuous(breaks = seq(2007, 2019, 1)) +
+  xlab("Year") + ylab("Total Budget (millions)") +
+  ggtitle("MTA Budget from 2007-2019") + 
+  theme_bw()
+
+## create a line graph for breakdown of mta budget
+mta_budget %>% group_by(budget_year, expense_type) %>% 
+  filter(budget_year <= 2019) %>%
+  summarize(total_cost = sum(expense_cost)) %>%
+  ggplot(aes(budget_year, total_cost, col = expense_type)) + geom_line(size = 1) +
+  scale_x_continuous(breaks = seq(2007, 2019, 1)) + scale_colour_discrete(name = "Expense Type") + 
+  xlab("Year") + ylab("Total Expense Cost (millions)") + ggtitle("Breakdown of MTA Budget") +
+  theme_bw()
+
+## set up the amount of colors needed for a bar plot
+nb.cols <- 13
+
+## assign the number of colors to a palette
+mycolors <- colorRampPalette(brewer.pal(8, "BuPu"))(nb.cols)
+
+## create a graph for labor expenses
+labor <- mta_budget %>% 
+  filter(expense_type == "Labor Expenses" & budget_year <= 2019) %>% 
+  mutate(budget_year = factor(budget_year)) %>%
+  group_by(budget_year, expense_description) %>%
+  summarize(total_expense_cost = sum(expense_cost)) %>% filter(total_expense_cost > 0) %>%
+  mutate(expense_description = reorder(expense_description, -total_expense_cost)) %>%
+  ggplot(aes(expense_description, total_expense_cost, fill = budget_year)) + 
+  geom_bar(position = "dodge", stat = "identity", colour = "black") +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +  ylim(0, 4000) +
+  scale_fill_manual(values = mycolors) +
+  ylab("Cost of Expense (millions)") +
+  ggtitle("MTA Labor Expenses") + theme_bw() +
+  theme(axis.title.x = element_blank())
+
+## create a graph for non-labor expenses
+non_labor <- mta_budget %>% 
+  filter(expense_type == "Non-Labor Expenses" & budget_year <= 2019) %>% 
+  mutate(budget_year = factor(budget_year)) %>%
+  group_by(budget_year, expense_description) %>%
+  summarize(total_expense_cost = sum(expense_cost)) %>% filter(total_expense_cost > 0) %>%
+  mutate(expense_description = reorder(expense_description, -total_expense_cost)) %>%
+  ggplot(aes(expense_description, total_expense_cost, fill = budget_year)) + 
+  geom_bar(position = "dodge", stat = "identity", colour = "black") +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +  ylim(0, 4000) + 
+  scale_fill_manual(values = mycolors) +
+  ylab("Cost of Expense (millions)") +
+  ggtitle("MTA Non-Labor Expenses") + theme_bw() +
+  theme(axis.title.x = element_blank())
+
+## arrange the graphs side by side
+ggarrange(labor, non_labor, ncol=2, nrow=1, common.legend = TRUE, legend="bottom")
+
+
+
+
+
+
+
+
+
+
+
 
 ## set the link for subway ridership totals
 subway_totals_url <- "http://web.mta.info/nyct/facts/ridership/"
@@ -126,52 +386,6 @@ subway_trains %>% filter(year <= 2018) %>%
   xlab("Scheduled Number of Trains") + ylab("Actual Number of Trains") +
   ggtitle("Total Number of Subways") + theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-## retrieve subway incidents data
-subway_incidents <- read_csv("https://github.com/jessicapadilla/mta-mismanagement/raw/master/subway_major_incidents.csv")
-
-## check the structure of the subway incidents table
-str(subway_incidents)
-
-## remove the division column and rename the category column
-subway_incidents <- subway_incidents %>% select(-division) %>% 
-  rename(type_of_issue = category)
-
-## add a year column using the values from the month column
-subway_incidents <- subway_incidents %>% mutate(year = month)
-
-## edit the year column by removing the month and change the year to numbers
-subway_incidents$year <- subway_incidents$year %>% 
-  str_replace("^(\\d{4})-(\\d{2})$", "\\1") %>% as.numeric()
-
-## check the different types of issues
-unique(subway_incidents$type_of_issue)
-
-## make the persons on trackbed/police/medical text shorter
-subway_incidents$type_of_issue <- subway_incidents$type_of_issue %>%
-  str_replace("Persons on Trackbed/Police/Medical", "Passenger")
-
-## reorder the types of issue
-subway_incidents$type_of_issue <- factor(subway_incidents$type_of_issue, 
-                                         levels = c("Signals", "Stations and Structure", 
-                                                    "Subway Car", "Track", 
-                                                    "Passenger", "Other"))
-
-## check the subway incidents table
-head(subway_incidents)
-
-## create a graph showing the number of subway-related incidents per year
-## exclude 2019 since the year is not yet completed
-subway_incidents %>% 
-  filter(year <= 2018 & type_of_issue %in% c("Signals", "Stations and Structure", "Subway Car", "Track")) %>%
-  group_by(year, type_of_issue) %>%
-  summarize(total_count = sum(count)) %>%
-  ggplot(aes(year, total_count)) + 
-  geom_bar(stat = "identity", fill = "black") + 
-  coord_cartesian(ylim = c(0, 300)) +
-  facet_wrap(.~type_of_issue, ncol = 2) +
-  xlab("Year") + ylab("Total Number of Incidents") +
-  ggtitle("Subway Incidents") + theme_bw()
 
 ## retrieve subway platform times data
 subway_platform_times <- read_csv("https://github.com/jessicapadilla/mta-mismanagement/raw/master/subway_platform_time.csv")
@@ -446,10 +660,16 @@ annual_riders <- left_join(subway_totals, annual_citi, by = "year") %>%
 ## filter the data to 2015 and after since subway ridership started to decline in 2015
 annual_riders %>% filter(year >= 2015) %>%
   ggplot(aes(citi_annual_to_date, average_weekends)) +
-  geom_point() + geom_line() + geom_abline() + theme_bw()
+  geom_point() + geom_smooth(method = "lm") + theme_bw()
 
 cor(annual_riders$citi_annual_to_date, annual_riders$average_weekends)
 
+annual_riders %>% summarize(r = cor(citi_annual_to_date, average_weekends)) %>% pull(r)
+galton_heights %>% summarize(r = cor(father, son)) %>% pull(r) 
+
+test %>% filter(year >= 2015) %>%
+  ggplot(aes(citi_annual_to_date, riders)) + geom_point() + geom_smooth(method = "lm")
+cor(test$citi_annual_to_date, test$riders)
 
 
 ## retrieve monthly subway ridership data
@@ -1022,3 +1242,13 @@ grid.arrange(weekdays, weekends, ncol = 2)
 
 min(start_mar2015$Date)
 max(end_mar2015$Date)
+
+test <- mta_revenue %>% filter(revenue_description == "Subway") 
+
+
+test <- subway_incidents %>% 
+  filter(type_of_issue == "Signals") %>%
+  group_by(month) %>%
+  summarize(total_inc = sum(count))
+test
+qplot(test$month, test$total_inc)
