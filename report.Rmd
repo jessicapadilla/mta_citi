@@ -1,5 +1,5 @@
 ---
-title: "Reallocating MTA Finances"
+title: "The Problem with the MTA"
 author: "Jessica Padilla"
 date: "September 27, 2019"
 output:
@@ -10,71 +10,73 @@ output:
 
 The Metropolitan Transportation Authority (MTA) is responsible for overseeing the transportation network throughout New York City and its surrounding regions.  The MTA consists of New York City Transit, Long Island Railroad, Metro-North Railroad, Staten Island Railway, Regional Bus Operations, and B&T (Bridges and Tunnels).  For this project, we focus on the New York City Transit subways provided by the MTA.
 
-In 1979, the subway system was completely deteoriated.  In order to revive the system, the MTA needed more funds than the State of New York could provide annually.  As a result, the MTA continuously sold bonds and took on several loans to rebuild infrastructure, in hopes that the debt would eventually be paid off by fare revenue.  However, many decades later, there is a decrease in subway ridership, and the MTA debt is approaching 42 billion dollars.  But why is subway ridership declining?  Is the MTA to blame, or are people looking to other forms of transportation?
+In 1979, the subway system was completely deteoriated.  In order to revive the system, the MTA needed more funds than the State of New York could provide annually.  As a result, the MTA continuously sold bonds and took on several loans to rebuild infrastructure, in hopes that the debt would eventually be paid off by fare revenue.  However, many decades later, there is a decrease in subway ridership and an increase in alternative forms of transportation.  Due to all these factors, the MTA debt is expected to approach 42 billion dollars by the year 2022 (Walker 1-2).  
 
-In 2013, a bike share program called Citi Bike was launched throughout NYC.  Citi Bike allows people to borrow bikes and pay either on an hourly basis, daily basis, or through an annual membership.  Because it is eco-friendly in nature and very affordable, it has attracted thousands of people throughout the city.  Several years later after its launch, the number of Citi Bike users continues to increase and shows no sign of slowing down.
+Since May 2003, the MTA has changed the subway fare 6 times to try to offset the debt ("New York City Transit Fares").  To aggravate the situation, the MTA is hoping to introduce a $50 billion plan for capital improvements ("Public Can Weigh in on MTA's $50 Billion Capital Plan").  They are also in the process of hiring an additional 500 transit cops to deal with the increase in subway assaults and fare evasion (Meyer, David et. al).
 
-Here we discuss how the decrease in subway ridership is correlated to the increase in Citi Bike services.  We also provide suggestions on how MTA finances can be re-allocated to help subways remain competitive in the transporation industry.
+Here we take an in depth look at the MTA's subway services.  We also discuss how finances can be re-allocated to assist with the MTA's ever-increasing debt and in the long run, provide a better transportation system for commuters.
 
 &nbsp;
 
 ## Methods
 
-Annual and average subway ridership totals were retrieved from the MTA web site (http://web.mta.info/nyct/facts/ridership/) through web scraping.  This involved extracting text and tables from the html code within the web page and converting them into data tables.  A breakdown of subway ridership at each station was also retrieved from the MTA web site (http://web.mta.info/nyct/facts/ridership/ridership_sub_annual.htm) through web scraping.
+MTA revenue, expenses, and budget data were found on the "MTA Fiscal Dashboard" of the Citizens Budget Commission website (https://cbcny.org/research/mta-fiscal-dashboard).  
 
-Information in regards to MTA subway service was obtained through the "Performance Dashboard" of the MTA web site (http://dashboard.mta.info).  Data was exported into 4 .csv files.
+Average subway ridership totals for weekdays and weekends were retrieved from the official MTA website (http://web.mta.info/nyct/facts/ridership/). 
 
-MTA budget and revenue data were found on the "MTA Fiscal Dashboard" of the Citizens Budget Commission web site (https://cbcny.org/research/mta-fiscal-dashboard).  Data was exported from the site into 3 .csv files. 
+Information in regards to MTA subway train totals, commute times, and incidents was obtained through the "Performance Dashboard" of the MTA website (http://dashboard.mta.info).
 
-Citi Bike data was retrieved from the official Citi Bike web site (https://www.citibikenyc.com/system-data).  All quarterly data was exported into a total of 22 .csv files.
+Most of the data was exported in the form of .csv files and uploaded onto GitHub (https://github.com/jessicapadilla/mta_finances).  If there was no export option available, data was retrieved from the site using web scraping.  This involved extracting tables from the html code within the webpage and converting them into data tables.  
 
-All of the data was, then, imported into R.  Data was filtered to only include information pertaining to the subway system and Citi Bikes.  It was also filtered up to and including the year 2018, since the year 2019 is not yet completed.  Wrangling was, then, performed to clean any relevant data and format it for further analysis.  After the data was cleaned, the subway and Citi Bike ridership data was merged into one table.  This was done through the use of the tidyverse package within R.
+All of the data was, then, imported into R.  The rvest package within R was used to obtain data from the .csv files and websites.  The tidyverse package was used for data cleaning, analysis, and visuzalition. The gridExtra, RColorBrewer, and ggpubr packages within R were also used to enhance the aesthetics of the graphs in this paper.
 
-The ggplot2 package was used within R as the primary tool for data visualization techniques.  Graphs generated with this package were used to demonstrate trends and new findings.
+The R code for this project can be found within the Supplementary Materials section of this paper and on GitHub (https://github.com/jessicapadilla/mta_finances/blob/master/code.R).
 
-
+&nbsp;
 
 ## Results
 
-The debt of the MTA has grown significantly over the years and is projected to reach $42 billion by the year 2022.  While fare revenue has been able to offset a bit of the debt, fare revenue has reached a standstill.  Data obtained from the MTA Fiscal Dashboard (Citizens Budget Commission) shows that although the fare revenue is much larger than what it was in 2007, the amount of fare revenue has slowed down since 2013.  In fact, there was a slight decrease in fare revenue in 2018.  This can be explained by the downward trend in subway ridership.
+The debt of the MTA has grown significantly over the years and is projected to reach $42 billion by the year 2022 (Walker 1-2).  While fare revenue has been able to offset a bit of the debt, fare revenue has reached a standstill.  The MTA Fiscal Dashboard data obtained from the Citizens Budget Commission shows that although the fare revenue is much larger than what it was in 2007, the amount of fare revenue has slowed down since 2013.  In fact, there was a slight decrease in fare revenue in 2018.  
 
 &nbsp;
-```{r, subway fare revenue, echo = FALSE, message = FALSE, results = 'hide', fig.height = 3.75}
+
+```{r, subway fare revenue, echo = FALSE, message = FALSE, warning = FALSE, results = 'hide', fig.height = 3.15}
 
 ## load libraries
 library(tidyverse)
 library(rvest)
 library(gridExtra)
-library(lubridate)
+library(RColorBrewer)
+library(ggpubr)
 
 ## retrieve the mta revenue data
 mta_revenue <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/mta_revenue.csv")
 
-## check the structure of the mta revenue table
+## check the structure of the mta revenue data
 str(mta_revenue)
 
-## remove unwanted columns and rename some columns
-mta_revenue <- mta_revenue %>% select(-c("Fifty2525", "Date Prefix", 
-                                         "Revenue Type Note", "Adjustments Outcome",
-                                         "No-Adjustments Value", "Date",
-                                         "Framework Selection Calculation")) %>%
-  rename(business_line_group = 'Business Line (group)',
-         business_line = 'Business Line',
-         revenue_description = Description1,
-         revenue_type = 'Revenue and Expense Type',
-         year = Year,
-         revenue_value = Value)
+## select needed columns and rename them
+mta_revenue <- mta_revenue %>% 
+  select(c("Business Line (group)", "Business Line",
+           "Description1", "Revenue and Expense Type",
+           "Year", "Value")) %>%
+  rename(business_line_group = "Business Line (group)",
+         business_line = "Business Line",
+         revenue_description = "Description1",
+         revenue_type = "Revenue and Expense Type",
+         mta_year = "Year",
+         revenue_value = "Value")
 
-## change all NA values to 0
-mta_revenue[is.na(mta_revenue)] = 0
+## change all NA values in the revenue value column to 0
+mta_revenue$revenue_value[is.na(mta_revenue$revenue_value)] = 0
 
-## check the mta revenue table
+## check the mta revenue data
 head(mta_revenue)
 
 ## create a graph for subway fare revenue totals each year
 ## exclude year 2019 since the year is not yet completed
-mta_revenue %>% filter(year <= 2018 & revenue_description == "Subway") %>%
-  ggplot(aes(year, revenue_value)) + 
+mta_revenue %>% filter(mta_year <= 2018 & revenue_description == "Subway") %>%
+  ggplot(aes(mta_year, revenue_value)) + 
   geom_bar(stat = "identity", fill = "black") +
   scale_x_continuous(breaks = seq(2007, 2018, 1)) + 
   xlab("Year") + ylab("Total Revenue (millions)") +
@@ -82,106 +84,76 @@ mta_revenue %>% filter(year <= 2018 & revenue_description == "Subway") %>%
   theme_bw()
 ```
 
-```{r, annual subway totals, echo = FALSE, message = FALSE, results = 'hide', fig.height = 3.75}
+The decrease in fare revenue in 2018 can be explained by the downward trend in subway ridership.  Data obtained from the MTA site showed that average weekday ridership was 5,465,034 in 2013, but declined to 5,437,587 in 2018.  Average weekend ridership also declined significantly from 5,806,517 in 2013 to 5,438,947 in 2018.
 
-## set the link for subway ridership totals
-subway_totals_url <- "http://web.mta.info/nyct/facts/ridership/"
+&nbsp;
 
-## get the html code
-subway_totals_html <- read_html(subway_totals_url)
+```{r, subway ridership, echo = FALSE, message = FALSE, warning = FALSE, results = 'hide', fig.height = 3.15}
 
-## get the tables from the html code
-subway_totals_table <- subway_totals_html %>% html_nodes("table")
+## set the link for subway ridership data
+subway_ridership_url <- "http://web.mta.info/nyct/facts/ridership/"
 
-## find the table
-subway_totals_table
+## get the html code from the webpage
+subway_ridership_html <- read_html(subway_ridership_url)
 
-## get the subway totals table
-subway_totals_table[[2]]
+## get the html nodes
+subway_ridership_nodes <- subway_ridership_html %>% html_nodes("table")
+
+## find the subway table
+subway_ridership_nodes
 
 ## turn the table to a data frame
-subway_totals <- subway_totals_table[[2]] %>% html_table
+subway_ridership <- subway_ridership_nodes[[2]] %>% html_table
 
 ## check the structure of the subway ridership data
-str(subway_totals)
+str(subway_ridership)
 
-## change the year column to numbers
-subway_totals[,1] <- subway_totals[,1] %>% as.numeric()
+## select the needed columns
+## rename the year column
+## then convert the data to a tibble
+subway_ridership <- subway_ridership %>% 
+  select(c("Year", "Average Weekday", "Average Weekend")) %>% 
+  rename(mta_year = "Year") %>% as_tibble()
 
-## create a function to remove commas from a column and turn the column to numbers
-numbers <- function(x){
-  x <- str_replace_all(x, ",", "")
-  x <- as.numeric(x)
-}
+## gather the columns
+subway_ridership <- subway_ridership %>% 
+  gather(category, totals, "Average Weekday":"Average Weekend")
 
-## remove the commas from the remaining columns and convert them to numbers
-subway_totals[,2:6] <- lapply(subway_totals[,(2:6)], numbers)
+## remove commas from the totals column and convert it to numbers
+subway_ridership$totals <- subway_ridership$totals %>%
+  str_replace_all(",", "") %>% as.numeric()
 
-## convert the data to a tibble
-subway_totals <- subway_totals %>% as_tibble()
+## create a graph for average weekday subway ridership
+weekday <- subway_ridership %>% 
+  filter(category == "Average Weekday") %>%
+  ggplot(aes(mta_year, totals)) + 
+  geom_point(color = "purple") + geom_line(color = "purple") +
+  scale_x_continuous(breaks = seq(2013, 2018, 1)) + 
+  coord_cartesian(ylim = c(5300000, 6000000)) +
+  xlab("Year") + ylab("Number of Subway Riders") +
+  ggtitle("Average Weekday Ridership") +
+  theme_bw()
 
-## rename the columns
-subway_totals <- subway_totals %>% 
-  rename(year = Year,
-         average_weekdays = `Average Weekday`,
-         average_saturdays = `Average Saturday`,
-         average_sundays = `Average Sunday`,
-         average_weekends = `Average Weekend`,
-         annual_total = `Annual Total`)
+## create a graph for average weekend subway ridership
+weekend <- subway_ridership %>% 
+  filter(category == "Average Weekend") %>%
+  ggplot(aes(mta_year, totals)) + 
+  geom_point(color = "red") + geom_line(color = "red") +
+  scale_x_continuous(breaks = seq(2013, 2018, 1)) + 
+  coord_cartesian(ylim = c(5300000, 6000000)) +
+  xlab("Year") + ylab("Number of Subway Riders") +
+  ggtitle("Average Weekend Ridership") +
+  theme_bw()
 
-## check the table
-head(subway_totals)
-
-## create a graph showing the annual number of subway riders
-subway_totals %>% 
-  ggplot(aes(year, annual_total)) + 
-  geom_point(color = "purple", show.legend = FALSE) + 
-  geom_line(color = "purple", show.legend = FALSE) + 
-  coord_cartesian(ylim = c(1650000000, 1800000000)) +
-  xlab("Year") + ylab("Total Number of Riders") + 
-  ggtitle("Annual Subway Ridership") + theme_bw()
+## put the ridership graphs side by side
+grid.arrange(weekday, weekend, ncol = 2)
 ```
-To understand the reason for the decline in ridership, we took a close look at subway service.  Information from the MTA web site showed that the number of actual subway trains in service almost matched the number of scheduled subway trains.  This can be seen by the nearly perfect line formed by plotting the number of scheduled trains to the number of actual trains.
+
+Over the years, subway riders have expressed their discontent over the number of subway incidents that delayed their commutes.  The MTA Performance Dashboard shows that signal incidents have not improved and occur approximately 250 times every year.  The number of station and structure incidents have also increased from 27 in 2013 to 70 in 2018.  Subway car incidents have stabilized to about 40 per year, while track incidents have improved (235 in 2015 versus 146 in 2018) but still remain a significant problem.
 
 &nbsp;
-```{r, subway trains, echo = FALSE, message = FALSE, results = 'hide', fig.height = 3.75}
 
-## retrieve train totals data
-subway_trains <- read_csv("https://github.com/jessicapadilla/mta-mismanagement/raw/master/subway_service_delivered.csv")
-
-## check the structure of the table
-str(subway_trains)
-
-## remove unwanted columns and rename some columns
-subway_trains <- subway_trains %>% select(-division) %>%
-  rename(scheduled_trains = "num_sched_trains", actual_trains = "num_actual_trains",
-         ratio_scheduled_to_actual_trains = "service delivered")
-
-## add a year column with the values from the month column
-subway_trains <- subway_trains %>% mutate(year = month)
-
-## edit the year column by removing the month and change the year to numbers
-subway_trains$year <- subway_trains$year %>% 
-  str_replace("^(\\d{4})-(\\d{2})$", "\\1") %>% as.numeric()
-
-## check the subway totals table
-head(subway_trains)
-
-## create a graph showing the total number of trains each year
-## exclude year 2019 since the year is not yet completed
-subway_trains %>% filter(year <= 2018) %>% 
-  mutate(year = factor(year)) %>% 
-  ggplot(aes(scheduled_trains, actual_trains, col = line)) + 
-  geom_point(size = 2) + facet_grid(. ~ year) +
-  scale_color_discrete(name = "Subway Line") + xlim(0, 4000) + ylim(0, 4000) +
-  xlab("Scheduled Number of Trains") + ylab("Actual Number of Trains") +
-  ggtitle("Total Number of Subways") + theme_bw() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
-However, when we checked subway performance, we found several issues.  Although there has been an improvement in the number of track incidents, there have been no significant improvements in signal and subway car issues.  There has also been an increase in the number of issues related to subway stations and other infrastructure.
-
-&nbsp;
-```{r, subway incidents, echo = FALSE, message = FALSE, results = 'hide', fig.height = 3.75}
+```{r, subway incidents, echo = FALSE, message = FALSE, warning = FALSE, results = 'hide', fig.height = 3.15}
 
 ## retrieve subway incidents data
 subway_incidents <- read_csv("https://github.com/jessicapadilla/mta-mismanagement/raw/master/subway_major_incidents.csv")
@@ -194,45 +166,46 @@ subway_incidents <- subway_incidents %>% select(-division) %>%
   rename(type_of_issue = category)
 
 ## add a year column using the values from the month column
-subway_incidents <- subway_incidents %>% mutate(year = month)
+subway_incidents <- subway_incidents %>% mutate(mta_year = month)
 
-## edit the year column by removing the month and change the year to numbers
-subway_incidents$year <- subway_incidents$year %>% 
+## edit the year column by removing the month
+## change the year to numbers
+subway_incidents$mta_year <- subway_incidents$mta_year %>% 
   str_replace("^(\\d{4})-(\\d{2})$", "\\1") %>% as.numeric()
 
 ## check the different types of issues
 unique(subway_incidents$type_of_issue)
 
-## make the persons on trackbed/police/medical text shorter
-subway_incidents$type_of_issue <- subway_incidents$type_of_issue %>%
-  str_replace("Persons on Trackbed/Police/Medical", "Passenger")
-
 ## reorder the types of issue
-subway_incidents$type_of_issue <- factor(subway_incidents$type_of_issue, 
-                                         levels = c("Signals", "Stations and Structure", 
-                                                    "Subway Car", "Track", 
-                                                    "Passenger", "Other"))
+subway_incidents$type_of_issue <- factor(subway_incidents$type_of_issue,
+                                 levels = c("Signals", 
+                                            "Stations and Structure", 
+                                            "Subway Car", "Track", 
+                                            "Persons on Trackbed/Police/Medical", "Other"))
 
 ## check the subway incidents table
 head(subway_incidents)
 
-## create a graph showing the number of subway-related incidents per year
+## create a graph showing the number of subway incidents per year
 ## exclude 2019 since the year is not yet completed
 subway_incidents %>% 
-  filter(year <= 2018 & type_of_issue %in% c("Signals", "Stations and Structure", "Subway Car", "Track")) %>%
-  group_by(year, type_of_issue) %>%
+  filter(mta_year <= 2018 & type_of_issue %in% 
+           c("Signals", "Stations and Structure", "Subway Car", "Track")) %>%
+  group_by(mta_year, type_of_issue) %>%
   summarize(total_count = sum(count)) %>%
-  ggplot(aes(year, total_count)) + 
-  geom_bar(stat = "identity", fill = "black") + 
+  ggplot(aes(mta_year, total_count)) + 
+  geom_bar(stat = "identity", fill = "black") +
   coord_cartesian(ylim = c(0, 300)) +
   facet_wrap(.~type_of_issue, ncol = 2) +
   xlab("Year") + ylab("Total Number of Incidents") +
   ggtitle("Subway Incidents") + theme_bw()
 ```
-Since the number of signal issues has not improved, train delays have also been prevalent over the years.  The amount of time passengers wait for a train and wait while they are on the train has remained at approximately 1 minute and 1.5 minute respectively.
+
+The problematic subway infrastructure has led to passengers waiting on the platform for approximately an additional 1.00 to 1.25 minutes and waiting on the train for approximately an additional 1.25 to 1.50 minutes.  
 
 &nbsp;
-```{r, additional subway times, echo = FALSE, message = FALSE, results = 'hide', fig.height = 3.75}
+
+```{r, additional commute times, echo = FALSE, message = FALSE, warning = FALSE, results = 'hide', fig.height = 3.75}
 
 ## retrieve subway platform times data
 subway_platform_times <- read_csv("https://github.com/jessicapadilla/mta-mismanagement/raw/master/subway_platform_time.csv")
@@ -240,16 +213,17 @@ subway_platform_times <- read_csv("https://github.com/jessicapadilla/mta-mismana
 ## check the structure of the subway platform table
 str(subway_platform_times)
 
-## remove the division column and rename some columns
-subway_platform_times <- subway_platform_times %>% select(-"division") %>% 
-  rename(total_passengers = "num_passengers", 
-         additional_platform_time = "additional platform time")
+## remove the division and number of passengers columns
+## rename the platform time column
+subway_platform_times <- subway_platform_times %>% 
+  select(-c("division", "num_passengers")) %>% 
+  rename(additional_platform_time = "additional platform time")
 
-## add a year column by adding values from the month column
-subway_platform_times <- subway_platform_times %>% mutate(year = month)
+## add a year column by using the values from the month column
+subway_platform_times <- subway_platform_times %>% mutate(mta_year = month)
 
 ## edit the year column by removing the month and change the year to numbers
-subway_platform_times$year <- subway_platform_times$year %>% 
+subway_platform_times$mta_year <- subway_platform_times$mta_year %>% 
   str_replace("^(\\d{4})-(\\d{2})$", "\\1") %>% as.numeric()
 
 ## check the subway platform table
@@ -257,12 +231,14 @@ head(subway_platform_times)
 
 ## create a graph for additional platform times
 ## exclude 2019 since the year is not yet completed
-add_platform <- subway_platform_times %>% filter(year <= 2018) %>% group_by(year) %>%
+add_platform <- subway_platform_times %>% 
+  filter(mta_year <= 2018) %>% group_by(mta_year) %>%
   summarize(average_additional_platform = mean(additional_platform_time)) %>%
-  ggplot(aes(year, average_additional_platform)) +
+  ggplot(aes(mta_year, average_additional_platform)) +
   geom_point(color = "purple") + geom_line(color = "purple") +
-  coord_cartesian(ylim = c(0, 2.0)) +
-  xlab("Year") + ylab("Minutes") + ggtitle("Average Additional Platform Time") +
+  coord_cartesian(ylim = c(0.75, 1.75)) +
+  xlab("Year") + ylab("Minutes") + 
+  ggtitle("Average Additional Platform Time") +
   theme_bw()
 
 ## retrieve subway train times data
@@ -271,16 +247,17 @@ subway_train_times <- read_csv("https://github.com/jessicapadilla/mta-mismanagem
 ## check the structure of the subway train times table
 str(subway_train_times)
 
-## remvoe the divison column and rename some columns
-subway_train_times <- subway_train_times %>% select(-"division") %>% 
-  rename(total_passengers = "num_passengers", 
-         additional_train_time = "additional train time")
+## remove the division and number of passengers columns
+## rename the train time column
+subway_train_times <- subway_train_times %>% 
+  select(-c("division", "num_passengers")) %>% 
+  rename(additional_train_time = "additional train time")
 
-## add a year column using the values from the month column
-subway_train_times <- subway_train_times %>% mutate(year = month)
+## add a year column by using the values from the month column
+subway_train_times <- subway_train_times %>% mutate(mta_year = month)
 
 ## edit the year column by removing the month and change the year to numbers
-subway_train_times$year <- subway_train_times$year %>% 
+subway_train_times$mta_year <- subway_train_times$mta_year %>% 
   str_replace("^(\\d{4})-(\\d{2})$", "\\1") %>% as.numeric()
 
 ## check the subway train times table
@@ -288,212 +265,122 @@ head(subway_train_times)
 
 ## create a graph for additional train times
 ## exclude 2019 since the year is not yet completed
-add_train <- subway_train_times %>% filter(year <= 2018) %>% group_by(year) %>%
+add_train <- subway_train_times %>% 
+  filter(mta_year <= 2018) %>% group_by(mta_year) %>%
   summarize(average_additional_train = mean(additional_train_time)) %>%
-  ggplot(aes(year, average_additional_train)) +
-  geom_point(color = "purple") + geom_line(color = "purple") +
-  coord_cartesian(ylim = c(0, 2.0)) +
-  xlab("Year") + ylab("Minutes") + ggtitle("Average Additional Train Time") +
+  ggplot(aes(mta_year, average_additional_train)) +
+  geom_point(color = "red") + geom_line(color = "red") +
+  coord_cartesian(ylim = c(0.75, 1.75)) +
+  xlab("Year") + ylab("Minutes") + 
+  ggtitle("Average Additional Train Time") +
   theme_bw()
 
 ## put the additional time graphs side by side
 grid.arrange(add_platform, add_train, ncol = 1)
 ```
-Citi Bikes were, then, introduced in NYC in 2013.  They allowed people to pay in per 30-minute ride, daily, or yearly.   Citi Bikes provided convenience and easily appealed to commuters since its annual membership for unlimited rides ($169) is cheaper than the unlimited Metrocard subway pass for a year ($1524).  Despite a decrease in usage in 2014, the number of daily Citi Bike trips has grown ever since then.  
+
+Data from the MTA site showed that the MTA also had a number of train cancellations throughout the years.  To demonstate this, the number of scheduled trains was plotted against the number of actual trains.  If the number of scheduled trains equalled the number of actual trains, the plotted dots would overlap and form a perfect line.  However, as seen in the graphs below, the imperfect line indicates that the number of scheduled trains rarely equalled the number of actual trains.  This also means that there were fewer actual trains in service.
 
 &nbsp;
-```{r,  daily citi bike totals, echo = FALSE, message = FALSE, results = 'hide', fig.height = 3.75}
 
-## get the Citi Bikes Q3 2013 data
-citi_q32013 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_launch_to_sep2013.csv")
+```{r, subway trains, echo = FALSE, message = FALSE, warning = FALSE, results = 'hide', fig.height = 3.45}
 
-## select the columns that are needed from the data
-citi_q32013 <- citi_q32013 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members`)
+## retrieve subway delivered data
+subway_delivered <- read_csv("https://github.com/jessicapadilla/mta-mismanagement/raw/master/subway_service_delivered.csv")
 
-## get the Citi Bikes Q4 2013 data
-citi_q42013 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_oct2013_to_dec2013.csv")
+## check the structure of the subway delivered table
+str(subway_delivered)
 
-## select the columns that are needed from the data
-citi_q42013 <- citi_q42013 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members`)
+## remove the division column and rename some columns
+subway_delivered <- subway_delivered %>% select(-division) %>%
+  rename(scheduled_trains = num_sched_trains, 
+         actual_trains = num_actual_trains)
 
-## get the Citi Bikes Q1 2014 data
-citi_q12014 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jan2014_to_mar2014.csv")
+## add a year column by using the values from the month column
+subway_delivered <- subway_delivered %>% mutate(mta_year = month)
 
-## select the columns that are needed from the data
-citi_q12014 <- citi_q12014 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members`)
+## edit the year column by removing the month and change the year to numbers
+subway_delivered$mta_year <- subway_delivered$mta_year %>% 
+  str_replace("^(\\d{4})-(\\d{2})$", "\\1") %>% as.numeric()
 
-## get the Citi Bikes Q2 2014 data
-citi_q22014 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_apr2014_to_jun2014.csv")
+## check the subway delivered times table
+head(subway_delivered)
 
-## select the columns that are needed from the data
-citi_q22014 <- citi_q22014 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Memberships Sold`) %>%
-  rename(`Total Annual Members` = `Total Annual Memberships Sold`)
+## create a graph showing the number of subways each year
+## exclude year 2019 since the year is not yet completed
+subway_delivered %>% filter(mta_year <= 2018) %>% 
+  mutate(mta_year = factor(mta_year)) %>% 
+  ggplot(aes(scheduled_trains, actual_trains, col = line)) + 
+  geom_point() + facet_grid(. ~ mta_year) +
+  scale_color_discrete(name = "Subway Line") + xlim(0, 3500) + ylim(0, 3500) +
+  xlab("Scheduled Number of Trains") + ylab("Actual Number of Trains") +
+  ggtitle("Total Number of Subways") + theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
 
-## get the Citi Bikes Q3 2014 data
-citi_q32014 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jul2014_to_sep2014.csv")
+In the midst of all the problems with subway service, the MTA hopes to utilize another $50 billion to repair subway stations, to add new signal systems for improved train speed, and to modernize the look of subway cars.  This is in addition to the escalating MTA budget (Meyer, David et. al).  But is such a massive new expense necessary?
 
-## select the columns that are needed from the data
-citi_q32014 <- citi_q32014 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Memberships Sold`) %>%
-  rename(`Total Annual Members` = `Total Annual Memberships Sold`)
+&nbsp;
 
-## get the Citi Bikes Q4 2014 data
-citi_q42014 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_oct2014_to_dec2014.csv")
+```{r, mta budget, echo = FALSE, message = FALSE, warning = FALSE, results = 'hide', fig.height = 3.15}
 
-## select the columns that are needed from the data
-citi_q42014 <- citi_q42014 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Memberships Sold`) %>%
-  rename(`Total Annual Members` = `Total Annual Memberships Sold`)
+## retrieve mta budget data
+mta_budget <- read_csv("https://github.com/jessicapadilla/mta-mismanagement/raw/master/mta_budget.csv")
 
-## get the Citi Bikes Q1 2015 data
-citi_q12015 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jan2015_to_mar2015.csv")
+## check the structure of the mta budget table
+str(mta_budget)
 
-## select the columns that are needed from the data
-citi_q12015 <- citi_q12015 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>%
-  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
+## remove unwanted columns and rename some columns
+mta_budget <- mta_budget %>% 
+  select(c("Business Line", "Description1", 
+           "Revenue and Expense Type",
+           "Year", "Value")) %>%
+  rename(business_line = "Business Line", 
+         expense_description = "Description1",
+         expense_type = "Revenue and Expense Type",
+         mta_year = "Year",
+         expense_cost = "Value")
 
-## get the Citi Bikes Q2 2015 data
-citi_q22015 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_apr2015_to_jun2015.csv")
+## check how many expense types there are
+unique(mta_budget$expense_type)
 
-## select the columns that are needed from the data
-citi_q22015 <- citi_q22015 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Memberships Sold`) %>% 
-  rename(`Total Annual Members` = `Total Annual Memberships Sold`)
+## rename the expense types
+mta_budget$expense_type <- mta_budget$expense_type %>%
+  str_replace("Labor Expense", "Labor Expenses") %>%
+  str_replace("Non-labor Expense", "Non-Labor Expenses") %>%
+  str_replace("Debt Service", "Debt Services")
 
-## get the Citi Bikes Q3 2015 data
-citi_q32015 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jul2015_to_sep2015.csv")
+## check how many expense descriptions there are for each expense type
+unique(mta_budget$expense_description[mta_budget$expense_type == "Labor Expenses"])
+unique(mta_budget$expense_description[mta_budget$expense_type == "Non-Labor Expenses"])
+unique(mta_budget$expense_description[mta_budget$expense_type == "Debt Services"])
 
-## select the columns that are needed from the data
-citi_q32015 <- citi_q32015 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Memberships Sold`) %>% 
-  rename(`Total Annual Members` = `Total Annual Memberships Sold`)
+## rename some of the expense descriptions
+mta_budget <- mta_budget %>% mutate(expense_description = case_when(
+  expense_type == "Labor Expenses" & expense_description == "Payroll" ~ "Payroll",
+  expense_type == "Labor Expenses" & expense_description == "Overtime" ~ "Overtime",
+  expense_type == "Labor Expenses" & expense_description == "Health and Welfare" ~ "Health and Welfare",
+  expense_type == "Labor Expenses" & expense_description %in% c("OPEB Current Payment", "Pensions", "Pensions Offset", "Other Fringe Benefits") ~ "Pensions and Other Benefits",
+  expense_type == "Labor Expenses" & expense_description == "Reimbursable Overhead" ~ "Reimbursable Overhead",
+  expense_type == "Non-Labor Expenses" & expense_description %in% c("Electric Power", "Fuel") ~ "Electricity and Fuel",
+  expense_type == "Non-Labor Expenses" & expense_description %in% c("Insurance", "Claims", "Other Business Expenses") ~ "Other Expenses",
+  expense_type == "Non-Labor Expenses" & expense_description %in% c("Paratransit Service Contracts", "Maintenance and Other Operating Contracts", "Professional Service Contracts") ~ "Contracts",
+  expense_type == "Non-Labor Expenses" & expense_description == "Materials and Supplies" ~ "Materials and Supplies",
+  expense_type == "Debt Services" & expense_description %in% c("Total MTA Bus Debt Service", "Total CRR Debt Service", "Total NYCT Debt Service", "Total SIRTOA Debt Service", "Total MTA HQ Debt Service for 2 Broadway Certificates of Participation", "Total B&T Debt Service", "BAB Subsidy") ~ "Debt Service"))
 
-## get the Citi Bikes Q4 2015 data
-citi_q42015 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_oct2015_to_dec2015.csv")
+## check the mta budget table
+head(mta_budget)
 
-## select the columns that are needed from the data
-citi_q42015 <- citi_q42015 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
-  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
-
-## get the Citi Bikes Q1 2016 data
-citi_q12016 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jan2016_to_mar2016.csv")
-
-## select the columns that are needed from the data
-citi_q12016 <- citi_q12016 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
-  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
-
-## get the Citi Bikes Q2 2016 data
-citi_q22016 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_apr2016_to_jun2016.csv")
-
-## select the columns that are needed from the data
-citi_q22016 <- citi_q22016 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
-  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
-
-## get the Citi Bikes Q3 2016 data
-citi_q32016 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jul2016_to_sep2016.csv")
-
-## select the columns that are needed from the data
-citi_q32016 <- citi_q32016 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
-  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
-
-## get the Citi Bikes Q4 2016 data
-citi_q42016 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_oct2016_to_dec2016.csv")
-
-## select the columns that are needed from the data
-citi_q42016 <- citi_q42016 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
-  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
-
-## get the Citi Bikes Q1 2017 data
-citi_q12017 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jan2017_to_mar2017.csv")
-
-## select the columns that are needed from the data
-citi_q12017 <- citi_q12017 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
-  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
-
-## get the Citi Bikes Q2 2017 data
-citi_q22017 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_apr2017_to_jun2017.csv")
-
-## select the columns that are needed from the data
-citi_q22017 <- citi_q22017 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
-  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
-
-## get the Citi Bikes Q3 2017 data
-citi_q32017 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jul2017_to_sep2017.csv")
-
-## select the columns that are needed from the data
-citi_q32017 <- citi_q32017 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
-  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
-
-## get the Citi Bikes Q4 2017 data
-citi_q42017 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_oct2017_to_dec2017.csv")
-
-## select the columns that are needed from the data
-citi_q42017 <- citi_q42017 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
-  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
-
-## get the Citi Bikes Q1 2018 data
-citi_q12018 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jan2018_to_mar2018.csv")
-
-## select the columns that are needed from the data
-citi_q12018 <- citi_q12018 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
-  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
-
-## get the Citi Bikes Q2 2018 data
-citi_q22018 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_apr2018_to_jun2018.csv")
-
-## select the columns that are needed from the data
-citi_q22018 <- citi_q22018 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
-  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
-
-## get the Citi Bikes Q3 2018 data
-citi_q32018 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_jul2018_to_sep2018.csv")
-
-## select the columns that are needed from the data
-citi_q32018 <- citi_q32018 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
-  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
-
-## get the Citi Bikes Q4 2018 data
-citi_q42018 <- read_csv("https://github.com/jessicapadilla/mta_citi_uber/raw/master/citi_oct2018_to_dec2018.csv")
-
-## select the columns that are needed from the data
-citi_q42018 <- citi_q42018 %>% select(Date, `Trips over the past 24-hours (midnight to 11:59pm)`, `Total Annual Members (All Time)`) %>% 
-  rename(`Total Annual Members` = `Total Annual Members (All Time)`)
-
-## combine all the citi data
-citi_riders <- rbind(citi_q32013, citi_q42013, 
-                     citi_q12014, citi_q22014, citi_q32014, citi_q42014,
-                     citi_q12015, citi_q22015, citi_q32015, citi_q42015,
-                     citi_q12016, citi_q22016, citi_q32016, citi_q42016,
-                     citi_q12017, citi_q22017, citi_q32017, citi_q42017,
-                     citi_q12018, citi_q22018, citi_q32018, citi_q42018)
-
-## check the citi data
-head(citi_riders)
-
-## rename the columns
-citi_riders <- citi_riders %>% 
-  rename(date = Date, total_citi_trips = `Trips over the past 24-hours (midnight to 11:59pm)`, 
-         citi_annual_to_date = `Total Annual Members`)
-
-## convert the date column to dates
-citi_riders$date <- mdy(citi_riders$date)
-
-## add a year column using the values from the date column
-citi_riders <- citi_riders %>% mutate(year = date)
-
-## edit the year column by removing the rest of the date and change the year to numbers
-citi_riders$year <- citi_riders$year %>% 
-  str_replace("^(\\d{4})-(\\d{2})-(\\d{2})$", "\\1") %>% as.numeric()
-
-## add a month column using the values from the date column
-citi_riders <- citi_riders %>% mutate(month = date)
-
-## edit the year column by removing the rest of the date and change the year to numbers
-citi_riders$month <- citi_riders$month %>% 
-  str_replace("^(\\d{4})-(\\d{2})-(\\d{2})$", "\\2") %>% as.numeric()
-
-## create a graph showing the number of citi bike trips
-citi_riders %>% ggplot(aes(year, total_citi_trips)) + 
-  geom_jitter(color = "purple", alpha = 0.3, size = 3, width = 0.3) + 
-  scale_x_continuous(breaks = seq(2013, 2018, 1)) + 
-  xlab("Year") + ylab("Number of Daily Trips") +
-  ggtitle("Citi Bike Trips") +
+## create a graph for mta budget totals each year
+## exclude any data after 2019 and any expenses with a value of 0 or below
+mta_budget %>% group_by(mta_year, expense_type) %>% 
+  filter(mta_year <= 2019 & expense_cost > 0) %>%
+  summarize(total_cost = sum(expense_cost)) %>%
+  ggplot(aes(mta_year, total_cost)) + 
+  geom_bar(stat = "identity", fill = "black") +
+  scale_x_continuous(breaks = seq(2007, 2019, 1)) +
+  xlab("Year") + ylab("Total Budget (millions)") +
+  ggtitle("MTA Budget") + 
   theme_bw()
 ```
 
