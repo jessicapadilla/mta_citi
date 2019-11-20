@@ -318,7 +318,7 @@ subway_delivered %>% filter(mta_year <= 2018) %>%
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-In the midst of all the problems with subway service, the MTA hopes to utilize another $50 billion to repair subway stations, to add new signal systems, and to modernize the look of subway cars.  This is in addition to the escalating MTA budget as seen below (Meyer, David et. al).  But is such a massive new expense necessary?
+In the midst of all the problems with subway service, the MTA hopes to utilize another $50 billion to repair subway stations, to add new signal systems, and to modernize the look of subway cars.  This is in addition to the escalating MTA budget shown below (Meyer, David et. al).  But is such a massive new expense necessary?
 
 &nbsp;
 
