@@ -6,7 +6,7 @@ library(RColorBrewer)
 library(ggpubr)
 
 ## retrieve the mta revenue data
-mta_revenue <- read_csv("https://github.com/jessicapadilla/problem_with_mta/raw/master/mta_revenue.csv")
+mta_revenue <- read_csv("https://github.com/jessicapadilla/problems_mta/raw/master/mta_revenue.csv")
 
 ## check the structure of the mta revenue data
 str(mta_revenue)
@@ -98,7 +98,7 @@ weekend <- subway_ridership %>%
 grid.arrange(weekday, weekend, ncol = 2)
 
 ## retrieve subway incidents data
-subway_incidents <- read_csv("https://github.com/jessicapadilla/problem_with_mta/raw/master/subway_major_incidents.csv")
+subway_incidents <- read_csv("https://github.com/jessicapadilla/problems_mta/raw/master/subway_major_incidents.csv")
 
 ## check the structure of the subway incidents table
 str(subway_incidents)
@@ -143,7 +143,7 @@ subway_incidents %>%
   ggtitle("Subway Incidents") + theme_bw()
 
 ## retrieve subway platform times data
-subway_platform_times <- read_csv("https://github.com/jessicapadilla/problem_with_mta/raw/master/subway_platform_time.csv")
+subway_platform_times <- read_csv("https://github.com/jessicapadilla/problems_mta/raw/master/subway_platform_time.csv")
 
 ## check the structure of the subway platform table
 str(subway_platform_times)
@@ -177,7 +177,7 @@ add_platform <- subway_platform_times %>%
   theme_bw()
 
 ## retrieve subway train times data
-subway_train_times <- read_csv("https://github.com/jessicapadilla/problem_with_mta/raw/master/subway_train_time.csv")
+subway_train_times <- read_csv("https://github.com/jessicapadilla/problems_mta/raw/master/subway_train_time.csv")
 
 ## check the structure of the subway train times table
 str(subway_train_times)
@@ -214,7 +214,7 @@ add_train <- subway_train_times %>%
 grid.arrange(add_platform, add_train, ncol = 1)
 
 ## retrieve subway delivered data
-subway_delivered <- read_csv("https://github.com/jessicapadilla/problem_with_mta/raw/master/subway_service_delivered.csv")
+subway_delivered <- read_csv("https://github.com/jessicapadilla/problems_mta/raw/master/subway_service_delivered.csv")
 
 ## check the structure of the subway delivered table
 str(subway_delivered)
@@ -246,7 +246,7 @@ subway_delivered %>% filter(mta_year <= 2018) %>%
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ## retrieve mta budget data
-mta_budget <- read_csv("https://github.com/jessicapadilla/problem_with_mta/raw/master/mta_budget.csv")
+mta_budget <- read_csv("https://github.com/jessicapadilla/problems_mta/raw/master/mta_budget.csv")
 
 ## check the structure of the mta budget table
 str(mta_budget)
