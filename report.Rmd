@@ -1,5 +1,5 @@
 ---
-title: "Using Data Visualization to Explore the Problem with the MTA's Operations"
+title: "Assessing the Problems of the MTA with Data Visualization"
 author: "Jessica Padilla"
 date: "September 27, 2019"
 output:
