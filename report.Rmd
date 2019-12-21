@@ -28,11 +28,10 @@ Information in regards to MTA subway train totals, commute times, and incidents 
 
 Most of the data was exported in the form of .csv files and uploaded onto GitHub (https://github.com/jessicapadilla/mta_finances).  If there was no export option available, data was retrieved from the site using web scraping.  This involved extracting tables from the html code within the webpage and converting them into data tables.  
 
-All of the data was, then, imported into R.  The rvest package within R was used to obtain data from the .csv files and websites.  The tidyverse package was used for data cleaning, analysis, and visuzalition. The gridExtra, RColorBrewer, and ggpubr packages within R were also used to enhance the aesthetics of the graphs in this paper.
+All of the data was, then, imported into R.  The rvest package within R was used to obtain data from the .csv files and websites.  The tidyverse package was used for data cleaning, analysis, and visualization. The gridExtra, RColorBrewer, and ggpubr packages within R were also used to enhance the aesthetics of the graphs in this paper.
 
 The R code for this project can be found within the Supplementary Materials section of this paper and on GitHub (https://github.com/jessicapadilla/mta_finances/blob/master/code.R).
 
-&nbsp;
 
 ## Results
 
@@ -318,7 +317,7 @@ subway_delivered %>% filter(mta_year <= 2018) %>%
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-In the midst of all the problems with subway service, the MTA hopes to utilize another $50 billion to repair subway stations, to add new signal systems, and to modernize the look of subway cars.  This is in addition to the escalating MTA budget shown below (Meyer, David et. al).  But is such a massive new expense necessary?
+In the midst of all the problems with subway service, the MTA hopes to utilize another $50 billion to repair subway stations, to add new signal systems, and to modernize the look of subway cars.  This is in addition to the escalating MTA budget (Meyer, David et. al).  But is such a massive new expense necessary?
 
 &nbsp;
 
@@ -465,21 +464,21 @@ ggarrange(labor, non_labor, ncol = 2, nrow = 1,
 ## Conclusion
 The MTA's plan to tackle its debt with the use of fare revenue is no longer a realistic plan, due to the decrease in subway ridership throughout the week.  This could possibly be due to the crippling infrastructure which includes signal, track, subway car, and station issues.  These lead to either delays in commute time and train cancellations.
 
-With the new plan unveiled by the MTA to spend another $50 billion in improving the subway system, one needs to ask if a new burden of debt is necessary.  Upon inspecting the MTA's expenses, payroll was revealed to cost the most out all types of expenses.  Moreover, overtime costs more than either materials and supplies or electricity and fuel.  If money from payroll and/or overtime were reallocated towards subway system improvements, then perhaps the MTA would not need to spend another $50 billion.  If the subway system was renovated and repaired, perhaps more commuters would start to use the subway again and lead to an increase in fare revenue.  Improvements to the MTA are absolutely necessary, especially if it plans to stay dominant in the transportation industry amongst new transportation rivals, such as CitiBike, Uber, and Lyft.  
+With the new plan unveiled by the MTA to spend another $50 billion in improving the subway system, one needs to ask if a new burden of debt is necessary.  Upon inspecting the MTA's expenses, payroll was revealed to cost the most out of all types of expenses.  Moreover, overtime costs more than either materials and supplies or electricity and fuel.  If money from payroll and/or overtime were reallocated towards subway system improvements, then perhaps the MTA would not need to spend another $50 billion.  If the subway system was renovated and repaired, perhaps more commuters would start to use the subway again and lead to an increase in fare revenue.  Improvements to the MTA are absolutely necessary, especially if it plans to stay dominant in the transportation industry amongst new transportation rivals, such as CitiBike, Uber, and Lyft.  
 
 &nbsp;
 
 ## References
 
-"Introduction to Subway Ridership", *MTA*, web.mta.info/nyct/facts/ridership.
+"Introduction to Subway Ridership." *MTA*, web.mta.info/nyct/facts/ridership.
 
-Meyer, David et al. "MTA Hiring 500 New Transit Cops in Wake of Rising Assaults", *New York Post*, NYP Holdings, Inc., 12 Sept. 2019, nypost.com/2019/09/12/mta-hiring-500-new-transit-cops-in-wake-of-rising-assaults.
+Meyer, David et al. "MTA Hiring 500 New Transit Cops in Wake of Rising Assaults." *New York Post*, NYP Holdings, Inc., 12 Sept. 2019, nypost.com/2019/09/12/mta-hiring-500-new-transit-cops-in-wake-of-rising-assaults.
 
 "MTA Fiscal Dashboard." *Citizens Budget Commission*, Citizens Budget Commission, 31 Aug. 2019, cbcny.org/research/mta-fiscal-dashboard.
 
-"MTA Subway Performance Dashboard"", *MTA*, dashboard.mta.info.
+"MTA Subway Performance Dashboard." *MTA*, dashboard.mta.info.
 
-"New York City Transit Fares", *Wikipedia*, Wikipedia, en.wikipedia.org/wiki/New_York_City_transit_fares.
+"New York City Transit Fares." *Wikipedia*, Wikipedia, en.wikipedia.org/wiki/New_York_City_transit_fares.
 
 "Public Can Weigh in on MTA’s $50 Billion Capital Plan." *AP*, The Associated Press, 12 Nov. 2019, apnews.com/de4925cbb8634c0fa126ef31e3c6a959.
 
