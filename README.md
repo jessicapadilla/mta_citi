@@ -1,4 +1,4 @@
-# The Problem with the MTA
+# Assessing the Problems of the MTA with Data Visualization
 This data visualization project focuses on subways provided by the Metropolitan Transportation Authority (MTA).  It provides an insight into the deteriorating subway infrastructure, along with its struggling financial management.  
 
 This repository contains the following files:
