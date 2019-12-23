@@ -10,7 +10,7 @@ output:
 
 The Metropolitan Transportation Authority (MTA) is responsible for overseeing the transportation network throughout New York City and its surrounding regions.  The MTA consists of New York City Transit, Long Island Railroad, Metro-North Railroad, Staten Island Railway, Regional Bus Operations, and B&T (Bridges and Tunnels).  For this project, we focus on the New York City Transit subways provided by the MTA.
 
-In 1979, the subway system was completely deteoriated.  In order to revive the system, the MTA needed more funds than the State of New York could provide annually.  As a result, the MTA continuously sold bonds and took on several loans to rebuild infrastructure, in hopes that the debt would eventually be paid off by fare revenue (Rivera 1-3).  However, many decades later, there is a decrease in subway ridership and an increase in alternative forms of transportation.  Due to all these factors, the MTA debt is expected to approach 42 billion dollars by the year 2022 (Walker 1-2).  
+In 1979, the subway system was completely deteriorated.  In order to revive the system, the MTA needed more funds than the State of New York could provide annually.  As a result, the MTA continuously sold bonds and took on several loans to rebuild infrastructure, in hopes that the debt would eventually be paid off by fare revenue (Rivera 1-3).  However, many decades later, there is a decrease in subway ridership and an increase in alternative forms of transportation.  Due to all these factors, the MTA debt is expected to approach 42 billion dollars by the year 2022 (Walker 1-2).  
 
 Since May 2003, the MTA has changed the subway fare 6 times to try to offset the debt ("New York City Transit Fares").  To aggravate the situation, the MTA is hoping to introduce a $50 billion plan for capital improvements ("Public Can Weigh in on MTA's $50 Billion Capital Plan").  They are also in the process of hiring an additional 500 transit cops to deal with the increase in subway assaults and fare evasion (Meyer, David et. al).
 
@@ -278,7 +278,7 @@ add_train <- subway_train_times %>%
 grid.arrange(add_platform, add_train, ncol = 1)
 ```
 
-Data from the MTA site showed that the MTA also had a number of train cancellations throughout the years.  To demonstate this, the number of scheduled trains was plotted against the number of actual trains.  If the number of scheduled trains equalled the number of actual trains, the plotted dots would overlap and form a perfect line.  However, as seen in the graphs below, the imperfect line indicates that the number of scheduled trains rarely equalled the number of actual trains.  This also means that there were fewer actual trains in service.
+Data from the MTA site showed that the MTA also had a number of train cancellations throughout the years.  To demonstrate this, the number of scheduled trains was plotted against the number of actual trains.  If the number of scheduled trains equaled the number of actual trains, the plotted dots would overlap and form a perfect line.  However, as seen in the graphs below, the imperfect line indicates that the number of scheduled trains rarely equaled the number of actual trains.  This also means that there were fewer actual trains in service.
 
 &nbsp;
 
